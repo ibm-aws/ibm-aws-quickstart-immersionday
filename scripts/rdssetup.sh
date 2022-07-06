@@ -1,11 +1,12 @@
 #!/bin/bash -xe
 
-# retrieve rds details from secret ,anager
-export PGENDPOINT=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RDSEndpoint")
-export PGPORT=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RDSPort")
-export PGUSERNAME=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RDSUserName")
-export PGPASSWORD=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RDSPassword")
-export PGDBNAME=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RDSDbname")
+# retrieve rds details from secretmanager
+export SECRETJSON=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets)
+export PGENDPOINT=SECRETJSON | $(jq -r ".SecretString" | jq -r ".RDSEndpoint")
+export PGPORT=SECRETJSON | $(jq -r ".SecretString" | jq -r ".RDSPort")
+export PGUSERNAME=$SECRETJSON | $(jq -r ".SecretString" | jq -r ".RDSUserName")
+export PGPASSWORD=SECRETJSON | $(jq -r ".SecretString" | jq -r ".RDSPassword")
+export PGDBNAME=SECRETJSON | $(jq -r ".SecretString" | jq -r ".RDSDbname")
 
 # setup postgres client
 sudo yum -y install postgresql13

@@ -198,3 +198,6 @@ psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"ts_regional_c
 psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"ts_regional_risk_index_table\" from './csv/ts_regional_risk_index_table.csv' delimiter ',' CSV HEADER"
 psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"ts_wallonia_region_table\" from './csv/ts_wallonia_region_table.csv' delimiter ',' CSV HEADER"
 psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"vacc\" from './csv/vacc.csv' delimiter ',' CSV HEADER"
+
+# remove csv folder
+rm -rf ./csv/ || true

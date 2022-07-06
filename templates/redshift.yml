@@ -1,0 +1,29 @@
+Parameters:
+  RedshiftClusterName:
+    Description: Name of the redshift Cluster
+    Type: String
+    Default: RedshiftCluster
+  RedshiftDBName:
+    Description: Redshift database name
+    Type: String
+    Default: immersion_day_db
+  RedshiftMasterUsername:
+    Description: username for master user
+    Type: String
+    Default: idmasteruser
+  RedshiftMasterPassword:
+    Description: Password for master user
+    Type: String
+    Default: IdMaster!23
+
+Resources:
+  RedshiftCluster:
+    Type: AWS::Redshift::Cluster
+    Properties:
+      ClusterIdentifier: !Ref RedshiftClusterName
+      ClusterType: single-node
+      DBName: !Ref RedshiftDBName
+      NodeType: dc2.large
+      Port: 5439
+      MasterUsername: !Ref RedshiftMasterUsername
+      MasterUserPassword: !Ref RedshiftMasterPassword

@@ -4,7 +4,7 @@
 export SECRETJSON=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets)
 export PGENDPOINT=SECRETJSON | $(jq -r ".SecretString" | jq -r ".RDSEndpoint")
 export PGPORT=SECRETJSON | $(jq -r ".SecretString" | jq -r ".RDSPort")
-export PGUSERNAME=$SECRETJSON | $(jq -r ".SecretString" | jq -r ".RDSUserName")
+export PGUSERNAME=SECRETJSON | $(jq -r ".SecretString" | jq -r ".RDSUserName")
 export PGPASSWORD=SECRETJSON | $(jq -r ".SecretString" | jq -r ".RDSPassword")
 export PGDBNAME=SECRETJSON | $(jq -r ".SecretString" | jq -r ".RDSDbname")
 
@@ -12,6 +12,8 @@ export PGDBNAME=SECRETJSON | $(jq -r ".SecretString" | jq -r ".RDSDbname")
 sudo yum -y install postgresql13
 
 # create tables
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "CREATE TABLE IF NOT EXISTS \"public\".\"CASES_AGESEX_refined\" (\"DATE\" character varying(1024), \"PROVINCE\" character varying(1024), \"REGION\" character varying(1024), \"AGEGROUP\" character varying(1024), \"SEX\" character varying(1024), \"CASES\" integer, \"RISK_INDEX\" integer) "
+
 psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "CREATE TABLE IF NOT EXISTS \"public\".\"HOSP_refined\" (\"DATE\" date, \"PROVIENCE\" character varying(1024), \"REGION\" character varying(1024), \"NR_REPORTING\" integer,\"TOTAL_IN\" integer,\"TOTAL_IN_ICU\" integer,\"TOTAL_IN_RESP\" integer,\"TOTAL_IN_ECMO\" integer,\"NEW_IN\" integer,\"NEW_OUT\" integer )" 
 
 psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "CREATE TABLE IF NOT EXISTS \"public\".\"MORT_refined\" (\"DATE\" date, \"REGION\" character varying(1024), \"AGEGROUP\" character varying(1024), \"SEX\" character varying(1024), \"DEATHS\" integer )"
@@ -117,3 +119,90 @@ psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "ALTER TABLE ONLY \"public\".
 psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "ALTER TABLE ONLY \"public\".\"credit_card\" ADD CONSTRAINT fk_credit_card_account_id FOREIGN KEY (\"account_id\") REFERENCES public.account(\"id\")" || true
 
 psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "ALTER TABLE ONLY \"public\".\"transaction\" ADD CONSTRAINT fk_transaction_credit_card_id FOREIGN KEY (\"cc_id\") REFERENCES public.credit_card(\"id\")" || true
+
+# download CSV to import to tables
+
+mkdir csv || true
+
+export GITHUBURL=https://github.com/ibm-aws/ibm-aws-quickstart-immersionday
+wget $GITHUBURL/blob/main/rds/csv/CASES_AGESEX_refined.csv -O ./csv/CASES_AGESEX_refined.csv
+wget $GITHUBURL/blob/main/rds/csv/HOSP_refined.csv -O ./csv/HOSP_refined.csv
+wget $GITHUBURL/blob/main/rds/csv/MORT_refined.csv -O ./csv/MORT_refined.cs
+wget $GITHUBURL/blob/main/rds/csv/Merged_HOSP_CAS.csv -O ./csv/Merged_HOSP_CAS.csv
+wget $GITHUBURL/blob/main/rds/csv/Merged_VACC_MORT.csv -O ./csv/Merged_VACC_MORT.csv
+wget $GITHUBURL/blob/main/rds/csv/TESTS_refined.csv -O ./csv/TESTS_refined.csv
+wget $GITHUBURL/blob/main/rds/csv/VACC_refined.csv -O ./csv/VACC_refined.csv
+wget $GITHUBURL/blob/main/rds/csv/account.csv -O ./csv/account.csv
+wget $GITHUBURL/blob/main/rds/csv/address.csv -O ./csv/address.csv
+wget $GITHUBURL/blob/main/rds/csv/credit_card.csv -O ./csv/credit_card.csv
+wget $GITHUBURL/blob/main/rds/csv/data_country_level.csv -O ./csv/data_country_level.csv
+wget $GITHUBURL/blob/main/rds/csv/flanders_cases_prediction_table.csv -O ./csv/flanders_cases_prediction_table.csv
+wget $GITHUBURL/blob/main/rds/csv/healthcare_personnel_integrated_data_table.csv -O ./csv/healthcare_personnel_integrated_data_table.csv
+wget $GITHUBURL/blob/main/rds/csv/healthcare_personnel_integrated_data_table_v1.csv -O ./csv/healthcare_personnel_integrated_data_table_v1.csv
+wget $GITHUBURL/blob/main/rds/csv/healthcare_personnel_integrated_datatable_v1.csv -O ./csv/healthcare_personnel_integrated_datatable_v1.csv
+wget $GITHUBURL/blob/main/rds/csv/merged_pii_data_source.csv -O ./csv/merged_pii_data_source.csv
+wget $GITHUBURL/blob/main/rds/csv/merged_pii_info_table.csv -O ./csv/merged_pii_info_table.csv
+wget $GITHUBURL/blob/main/rds/csv/mort.csv -O ./csv/mort.csv
+wget $GITHUBURL/blob/main/rds/csv/mylan_specialty_personnel_data_table.csv -O ./csv/mylan_specialty_personnel_data_table.csv
+wget $GITHUBURL/blob/main/rds/csv/pii_info.csv -O ./csv/pii_info.csv
+wget $GITHUBURL/blob/main/rds/csv/test.csv -O ./csv/test.csv
+wget $GITHUBURL/blob/main/rds/csv/transaction.csv -O ./csv/transaction.csv
+wget $GITHUBURL/blob/main/rds/csv/ts-data-region.csv -O ./csv/ts-data-region.csv
+wget $GITHUBURL/blob/main/rds/csv/ts-data-region_mod.csv -O ./csv/ts-data-region_mod.csv
+wget $GITHUBURL/blob/main/rds/csv/ts_Belgium.csv -O ./csv/ts_Belgium.csv
+wget $GITHUBURL/blob/main/rds/csv/ts_Belgium_agg.csv -O ./csv/ts_Belgium_agg.csv
+wget $GITHUBURL/blob/main/rds/csv/ts_Brussels.csv -O ./csv/ts_Brussels.csv
+wget $GITHUBURL/blob/main/rds/csv/ts_Brussels_agg.csv -O ./csv/ts_Brussels_agg.csv
+wget $GITHUBURL/blob/main/rds/csv/ts_Flanders.csv -O ./csv/ts_Flanders.csv
+wget $GITHUBURL/blob/main/rds/csv/ts_Flanders_agg.csv -O ./csv/ts_Flanders_agg.csv
+wget $GITHUBURL/blob/main/rds/csv/ts_Wallonia.csv -O ./csv/ts_Wallonia.csv
+wget $GITHUBURL/blob/main/rds/csv/ts_Wallonia_agg.csv -O ./csv/ts_Wallonia_agg.csv
+wget $GITHUBURL/blob/main/rds/csv/ts_belgium_covid_statistics_table.csv -O ./csv/ts_belgium_covid_statistics_table.csv
+wget $GITHUBURL/blob/main/rds/csv/ts_brussels_region_table.csv -O ./csv/ts_brussels_region_table.csv
+wget $GITHUBURL/blob/main/rds/csv/ts_flanders_region_table.csv -O ./csv/ts_flanders_region_table.csv
+wget $GITHUBURL/blob/main/rds/csv/ts_regional_covid_statistics_table.csv -O ./csv/ts_regional_covid_statistics_table.csv
+wget $GITHUBURL/blob/main/rds/csv/ts_regional_risk_index_table.csv -O ./csv/ts_regional_risk_index_table.csv
+wget $GITHUBURL/blob/main/rds/csv/ts_wallonia_region_table.csv -O ./csv/ts_wallonia_region_table.csv
+wget $GITHUBURL/blob/main/rds/csv/vacc.csv -O ./csv/vacc.csv
+
+
+# import CSV to datatable
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"CASES_AGESEX_refined\" from './csv/CASES_AGESEX_refined.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"HOSP_refined\" from './csv/HOSP_refined.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"MORT_refined\" from './csv/MORT_refined.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"Merged_HOSP_CAS\" from './csv/Merged_HOSP_CAS.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"Merged_VACC_MORT\" from './csv/Merged_VACC_MORT.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"TESTS_refined\" from './csv/TESTS_refined.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"VACC_refined\" from './csv/VACC_refined.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"account\" from './csv/account.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"address\" from './csv/address.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"credit_card\" from './csv/credit_card.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"data_country_level\" from './csv/data_country_level.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"flanders_cases_prediction_table\" from './csv/flanders_cases_prediction_table.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"healthcare_personnel_integrated_data_table\" from './csv/healthcare_personnel_integrated_data_table.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"healthcare_personnel_integrated_data_table_v1\" from './csv/healthcare_personnel_integrated_data_table_v1.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"healthcare_personnel_integrated_datatable_v1\" from './csv/healthcare_personnel_integrated_datatable_v1.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"merged_pii_data_source\" from './csv/merged_pii_data_source.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"merged_pii_info_table\" from './csv/merged_pii_info_table.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"mort\" from './csv/mort.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"mylan_specialty_personnel_data_table\" from './csv/mylan_specialty_personnel_data_table.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"pii_info\" from './csv/pii_info.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"test\" from './csv/test.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"transaction\" from './csv/transaction.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"ts-data-region\" from './csv/ts-data-region.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"ts-data-region_mod\" from './csv/ts-data-region_mod.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"ts_Belgium\" from './csv/ts_Belgium.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"ts_Belgium_agg\" from './csv/ts_Belgium_agg.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"ts_Brussels\" from './csv/ts_Brussels.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"ts_Brussels_agg\" from './csv/ts_Brussels_agg.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"ts_Flanders\" from './csv/ts_Flanders.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"ts_Flanders_agg\" from './csv/ts_Flanders_agg.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"ts_Wallonia\" from './csv/ts_Wallonia.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"ts_Wallonia_agg\" from './csv/ts_Wallonia_agg.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"ts_belgium_covid_statistics_table\" from './csv/ts_belgium_covid_statistics_table.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"ts_brussels_region_table\" from './csv/ts_brussels_region_table.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"ts_flanders_region_table\" from './csv/ts_flanders_region_table.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"ts_regional_covid_statistics_table\" from './csv/ts_regional_covid_statistics_table.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"ts_regional_risk_index_table\" from './csv/ts_regional_risk_index_table.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"ts_wallonia_region_table\" from './csv/ts_wallonia_region_table.csv' delimiter ',' CSV HEADER"
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"vacc\" from './csv/vacc.csv' delimiter ',' CSV HEADER"

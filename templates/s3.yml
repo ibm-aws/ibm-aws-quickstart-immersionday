@@ -55,14 +55,12 @@ Resources:
     Properties:
       Name: "S3ImmerssiondayBucketSecrets"
       SecretString: !Sub 
-        - '{"aws_secret_access_key":"${S3IAMUserAccessKey}", "aws_access_key_id":"${S3IAMUserSecret}"}'
-        - {S3IAMUserAccessKey: !Ref S3IAMUserAccessKey, S3IAMUserSecret: !GetAtt S3IAMUserAccessKey.SecretAccessKey}
+        - '{"S3Bucket":"${S3Bucket}", "S3BucketArn":"${S3BucketArn}", "aws_secret_access_key":"${S3IAMUserAccessKey}", "aws_access_key_id":"${S3IAMUserSecret}"}'
+        - {S3Bucket: !Ref S3Bucket, S3BucketArn: !GetAtt S3Bucket.Arn, S3IAMUserAccessKey: !Ref S3IAMUserAccessKey, S3IAMUserSecret: !GetAtt S3IAMUserAccessKey.SecretAccessKey}
 Outputs:
-  BucketName:
+  S3BucketName:
     Value: !Ref S3Bucket
-  BucketArn:
+  S3BucketArn:
     Value: !GetAtt S3Bucket.Arn
   S3CredentialSecret:
     Value: !Ref S3CredentialSecret
-  
-      

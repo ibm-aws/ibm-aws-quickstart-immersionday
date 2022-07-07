@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Master template for an AWS IBM Immersion Day.'
+Description: 'Master template for an IBM AWS Immersion Day.'
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -173,7 +173,7 @@ Parameters:
     Description: >-
       The cloud formation S3 bucket. This contains all template and config in respective folders.
     Type: String
-    Default: immersiontestbucket
+    Default: 
   RedshiftClusterName:
       Description: Name of the redshift Cluster
       Type: String
@@ -194,7 +194,7 @@ Parameters:
     Type: String
     Default: "idmasteruser"
   RedshiftMasterPassword:
-    Description: Choose RedShift Master password, Password must be AlphaNumeric.
+    Description: Choose RedShift Master password, password should be alphanumeric with at least 1 special character and 1 uppercase letter
     Type: String
     NoEcho: 'true'
   NodeType:
@@ -240,11 +240,11 @@ Parameters:
     ConstraintDescription: Must start with a letter. Only numbers, letters, and _ accepted. max length 16 characters
     Default: 'immersiondaydb'
   AuroraDBPassword:
-    Description: Database password
+    Description: Database password, password should be alphanumeric with at least 1 special character and 1 uppercase letter
     Type: String
     MinLength: '8'
     NoEcho: 'true'
-    Default: 'IBMAWSImmersionDay11'
+    Default: ''
   AuroraDBInstanceClass:
     Description: Database Instance Class
     Type: String

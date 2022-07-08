@@ -41,7 +41,7 @@ Parameters:
     Type: String
     Description: Master password for Redshift  (Password string should have mix of uppercase, lowercase and numbers)
     Default: IbmAwsImmersionday!23
-#    NoEcho: true
+    NoEcho: true
   NodeType:
     Default: dc2.large
     AllowedValues:

@@ -20,7 +20,7 @@ function create_users() {
     export ram=$RANDOM
     curl -k -X POST -H "Authorization: Bearer $token" -H "cache-control: no-cache" -d "{\"user_name\":\"user$ram\",\"password\":\"password\",\"displayName\":\"User$ram\",\"permissions\":[\"administrator\",\"can_provision\"],\"user_roles\":[\"zen_administrator_role\"],\"email\":\"user$ram@user.com\"}" "https://$route/icp4d-api/v1/users" -H "Content-Type: application/json"
 
-    curl -k -X POST -H "Authorization: Bearer $token" -H "cache-control: no-cache" -d "{\"user_name\":\"datascientist\",\"password\":\"password\",\"displayName\":\"datascientist\",\"permissions\":[\"sign_in_only\"],\"user_roles\":[\"zen_user_role\"],\"email\":\"datascientist@test.com\"}" "https://$route/icp4d-api/v1/users" -H "Content-Type: application/json"
+    curl -k -X POST -H "Authorization: Bearer $token" -H "cache-control: no-cache" -d "{\"user_name\":\"datascientist$ram\",\"password\":\"password\",\"displayName\":\"datascientist$ram\",\"permissions\":[\"sign_in_only\"],\"user_roles\":[\"zen_user_role\"],\"email\":\"datascientist@test.com\"}" "https://$route/icp4d-api/v1/users" -H "Content-Type: application/json"
 
     echo "Users created successfully."
   else

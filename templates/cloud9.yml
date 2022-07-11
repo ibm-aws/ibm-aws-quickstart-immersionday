@@ -293,7 +293,7 @@ Resources:
             - sudo yum install postgresql13 postgresql13-server -y
             - sudo /usr/pgsql-13/bin/postgresql-13-setup initdb
             - sudo systemctl enable --now postgresql-13
-             - echo '=== Postgresql Server Completion ==='
+             - echo '=== Postgresql Server Completion ===='
             - echo '=== CONFIGURE awscli and setting ENVIRONMENT VARS ==='
             - echo "complete -C '/usr/local/bin/aws_completer' aws" >> /home/ec2-user/.bashrc
             - mkdir /home/ec2-user/.aws

@@ -25,6 +25,7 @@ Metadata:
         Parameters:
           - C9InstanceType
           - C9EnvType
+          - C9OwnerArn
           - C9InstanceVolumeSize
       - Label:
           default: RedShift
@@ -73,6 +74,8 @@ Metadata:
         default: Cloud formation S3 bucket
       C9InstanceType:
         default: Cloud9 Instance Type
+      C9OwnerArn:
+        default: Cloud9 Owner Arn
       C9EnvType:
         default: Cloud9 Environment Type
       C9InstanceVolumeSize:
@@ -318,6 +321,10 @@ Parameters:
     Type: Number
     Description: The Size in GB of the Cloud9 Instance Volume.
     Default: 15
+  C9OwnerArn:
+    Type: String
+    Description: The Arn of the Cloud9 Owner to be set if 3rdParty deployment.
+    Default: ""
 
 Conditions:
   3AZCondition: !Equals [!Ref NumberOfAZs, 3]
@@ -367,6 +374,7 @@ Resources:
           C9InstanceType: !Ref 'C9InstanceType'
           C9EnvType: !Ref 'C9EnvType'
           C9InstanceVolumeSize: !Ref 'C9InstanceVolumeSize'
+          C9OwnerArn: !Ref 'C9OwnerArn'
 
     AuroraStack:
       Type: AWS::CloudFormation::Stack

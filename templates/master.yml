@@ -24,7 +24,6 @@ Metadata:
           default: Cloud9
         Parameters:
           - C9InstanceType
-          - C9EnvType
           - C9OwnerArn
           - C9InstanceVolumeSize
       - Label:
@@ -76,8 +75,6 @@ Metadata:
         default: Cloud9 Instance Type
       C9OwnerArn:
         default: Cloud9 Owner Arn
-      C9EnvType:
-        default: Cloud9 Environment Type
       C9InstanceVolumeSize:
         default: Cloud9 Instance VolumeSize
       RedshiftClusterName:
@@ -308,14 +305,6 @@ Parameters:
       - t3.small
       - t3.medium
     ConstraintDescription: Must be a valid Cloud9 instance type
-  C9EnvType:
-    Description: Environment type.
-    Default: self
-    Type: String
-    AllowedValues:
-      - self
-      - 3rdParty
-    ConstraintDescription: must specify self or 3rdParty.
   C9InstanceVolumeSize:
     Type: Number
     Description: The Size in GB of the Cloud9 Instance Volume.
@@ -371,7 +360,6 @@ Resources:
                   - /templates/cloud9.yml
         Parameters:
           C9InstanceType: !Ref 'C9InstanceType'
-          C9EnvType: !Ref 'C9EnvType'
           C9InstanceVolumeSize: !Ref 'C9InstanceVolumeSize'
           C9OwnerArn: !Ref 'C9OwnerArn'
 

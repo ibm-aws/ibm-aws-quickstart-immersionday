@@ -39,6 +39,23 @@ function load_data_redshit() {
 # Loading Data to RDS
 #====================
 function load_data_rds() {
+
+
+  echo "******************* Installing Postgresql *******************"
+sudo tee /etc/yum.repos.d/pgdg.repo<<EOF
+[pgdg13]
+name=PostgreSQL 13 for RHEL/CentOS 7 - x86_64
+baseurl=https://download.postgresql.org/pub/repos/yum/13/redhat/rhel-7-x86_64
+enabled=1
+gpgcheck=0
+EOF
+
+  sudo yum update -y -q
+  sudo yum install postgresql13 postgresql13-server -y -q
+  sudo /usr/pgsql-13/bin/postgresql-13-setup initdb
+  sudo systemctl enable --now postgresql-13
+
+
   echo "******************* Loading Data to RDS *******************"
   # retrieve rds details from secretmanager
   export PGENDPOINT=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RDSEndpoint")

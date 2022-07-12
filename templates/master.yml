@@ -24,7 +24,7 @@ Metadata:
           default: Cloud9
         Parameters:
           - C9InstanceType
-          - C9EnvType
+          - C9OwnerArn
           - C9InstanceVolumeSize
       - Label:
           default: RedShift
@@ -73,8 +73,8 @@ Metadata:
         default: Cloud formation S3 bucket
       C9InstanceType:
         default: Cloud9 Instance Type
-      C9EnvType:
-        default: Cloud9 Environment Type
+      C9OwnerArn:
+        default: Cloud9 Owner Arn
       C9InstanceVolumeSize:
         default: Cloud9 Instance VolumeSize
       RedshiftClusterName:
@@ -173,7 +173,7 @@ Parameters:
     Description: >-
       The cloud formation S3 bucket. This contains all template and config in respective folders.
     Type: String
-    Default: ImmersionDayBucket
+    Default: ""
   RedshiftClusterName:
       Description: Name of the redshift Cluster
       Type: String
@@ -245,7 +245,6 @@ Parameters:
     Type: String
     MinLength: '8'
     NoEcho: 'true'
-    Default: ''
     Default: IbmAwsImmersionday!23
   AuroraDBInstanceClass:
     Description: Database Instance Class
@@ -306,18 +305,14 @@ Parameters:
       - t3.small
       - t3.medium
     ConstraintDescription: Must be a valid Cloud9 instance type
-  C9EnvType:
-    Description: Environment type.
-    Default: self
-    Type: String
-    AllowedValues:
-      - self
-      - 3rdParty
-    ConstraintDescription: must specify self or 3rdParty.
   C9InstanceVolumeSize:
     Type: Number
     Description: The Size in GB of the Cloud9 Instance Volume.
     Default: 15
+  C9OwnerArn:
+    Type: String
+    Description: The Arn of the Cloud9 Owner to be set if 3rdParty deployment.
+    Default: ""
 
 Conditions:
   3AZCondition: !Equals [!Ref NumberOfAZs, 3]
@@ -365,8 +360,8 @@ Resources:
                   - /templates/cloud9.yml
         Parameters:
           C9InstanceType: !Ref 'C9InstanceType'
-          C9EnvType: !Ref 'C9EnvType'
           C9InstanceVolumeSize: !Ref 'C9InstanceVolumeSize'
+          C9OwnerArn: !Ref 'C9OwnerArn'
 
     AuroraStack:
       Type: AWS::CloudFormation::Stack

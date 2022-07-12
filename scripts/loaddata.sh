@@ -8,8 +8,11 @@ function load_data_s3() {
   export S3BucketArn=$(aws secretsmanager get-secret-value --secret-id S3ImmerssiondayBucketSecrets | jq -r ".SecretString" | jq -r ".S3BucketArn")
   export aws_secret_access_key=$(aws secretsmanager get-secret-value --secret-id S3ImmerssiondayBucketSecrets | jq -r ".SecretString" | jq -r ".aws_secret_access_key")
   export aws_access_key_id=$(aws secretsmanager get-secret-value --secret-id S3ImmerssiondayBucketSecrets | jq -r ".SecretString" | jq -r ".aws_access_key_id")
-
   cd ..;aws s3 cp s3/data/ s3://$S3Bucket/ --recursive
+
+  echo S3Bucket=$S3Bucket
+  echo Secret_Key=$aws_secret_access_key
+  echo Access_key=$aws_access_key_id
 
 }
 
@@ -26,6 +29,10 @@ function load_data_redshit() {
   # Call Fat Jar
   java -jar redshift-data-loading-prod.jar $REDSHIFT_ENDPOINT $REDSHIFT_PORT $REDSHIFT_DBNAME $REDSHIFT_USERNAME $REDSHIFT_PASSWORD
 
+  echo RedShift_Username=$REDSHIFT_USERNAME
+  echo RedShift_Password=$REDSHIFT_PASSWORD
+  echo RedShift_Database_Name=$REDSHIFT_DBNAME
+  echo RedShift_Port=$REDSHIFT_PORT
 }
 
 #====================
@@ -40,13 +47,11 @@ function load_data_rds() {
   export PGPASSWORD=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RDSPassword")
   export PGDBNAME=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RDSDbname")
 
-  # Adding PostgreSQL 13 repository
-  sudo yum -y -q install https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-  sudo yum -y -q update
 
-  # setup postgres client
-  sudo yum -y -q install postgresql13
-
+  echo Postgres_Username=$PGUSERNAME
+  echo Postgres_Password=$PGPASSWORD
+  echo Postgres_Database_Name=$PGDBNAME
+  echo Postgres_Port=$PGPORT
 
   # drop DB tables
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "drop table if exists \"public\".\"CASES_AGESEX_refined\" cascade"

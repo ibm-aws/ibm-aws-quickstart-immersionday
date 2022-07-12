@@ -176,7 +176,7 @@ Parameters:
     Description: >-
       The cloud formation S3 bucket. This contains all template and config in respective folders.
     Type: String
-    Default: ImmersionDayBucket
+    Default: ''
   RedshiftClusterName:
       Description: Name of the redshift Cluster
       Type: String
@@ -248,7 +248,6 @@ Parameters:
     Type: String
     MinLength: '8'
     NoEcho: 'true'
-    Default: ''
     Default: IbmAwsImmersionday!23
   AuroraDBInstanceClass:
     Description: Database Instance Class

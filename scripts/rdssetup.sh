@@ -1,7 +1,6 @@
 #!/bin/bash -xe
 
 # retrieve rds details from secretmanager
-
 export PGENDPOINT=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RDSEndpoint")
 export PGPORT=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RDSPort")
 export PGUSERNAME=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RDSUserName")
@@ -10,11 +9,9 @@ export PGDBNAME=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiond
 
 
 # setup postgres client
-
 sudo yum -y install postgresql13
 
 # drop DB tables
-
 psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "drop table if exists \"public\".\"CASES_AGESEX_refined\" cascade"
 psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "drop table if exists \"public\".\"VACC_refined\" cascade"
 psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "drop table if exists \"public\".\"flanders_cases_prediction_table\" cascade"
@@ -58,7 +55,7 @@ psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "drop table if exists \"publi
 # create tables
 
 psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "CREATE TABLE IF NOT EXISTS \"public\".\"CASES_AGESEX_refined\" (\"DATE\" character varying(1024), \"PROVINCE\" character varying(1024), \"REGION\" character varying(1024), \"AGEGROUP\" character varying(1024), \"SEX\" character varying(1024), \"CASES\" integer, \"RISK_INDEX\" integer)"
-psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "CREATE TABLE IF NOT EXISTS \"public\".\"HOSP_refined\" (\"DATE\" date, \"PROVIENCE\" character varying(1024), \"REGION\" character varying(1024), \"NR_REPORTING\" integer,\"TOTAL_IN\" integer,\"TOTAL_IN_ICU\" integer,\"TOTAL_IN_RESP\" integer,\"TOTAL_IN_ECMO\" integer,\"NEW_IN\" integer,\"NEW_OUT\" integer )" 
+psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "CREATE TABLE IF NOT EXISTS \"public\".\"HOSP_refined\" (\"DATE\" date, \"PROVIENCE\" character varying(1024), \"REGION\" character varying(1024), \"NR_REPORTING\" integer,\"TOTAL_IN\" integer,\"TOTAL_IN_ICU\" integer,\"TOTAL_IN_RESP\" integer,\"TOTAL_IN_ECMO\" integer,\"NEW_IN\" integer,\"NEW_OUT\" integer )"
 psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "CREATE TABLE IF NOT EXISTS \"public\".\"MORT_refined\" (\"DATE\" date, \"REGION\" character varying(1024), \"AGEGROUP\" character varying(1024), \"SEX\" character varying(1024), \"DEATHS\" integer )"
 psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "CREATE TABLE IF NOT EXISTS \"public\".\"Merged_HOSP_CAS\" (\"DATE\" date, \"PROVINCE\" character varying(1024), \"REGION\" character varying(1024), \"NR_REPORTING\" integer, \"TOTAL_IN\" integer, \"TOTAL_IN_ICU\" integer, \"TOTAL_IN_RESP\" integer, \"TOTAL_IN_ECMO\" integer, \"NEW_IN\" integer, \"NEW_OUT\" integer, \"AGEGROUP\" character varying(1024), \"SEX\" character varying(1024), \"CASES\" integer ) "
 psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "CREATE TABLE IF NOT EXISTS \"public\".\"Merged_VACC_MORT\" (\"DATE\" date, \"REGION\" character varying(1024), \"AGEGROUP\" character varying(1024), \"SEX\" character varying(1024), \"BRAND\" character varying(1024), \"DOSE\" character varying(1024), \"COUNT\" integer, \"DEATHS\" integer ) "

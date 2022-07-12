@@ -173,7 +173,7 @@ Parameters:
     Description: >-
       The cloud formation S3 bucket. This contains all template and config in respective folders.
     Type: String
-    Default: 
+    Default:
   RedshiftClusterName:
       Description: Name of the redshift Cluster
       Type: String
@@ -197,6 +197,7 @@ Parameters:
     Description: Choose RedShift Master password, password should be alphanumeric with at least 1 special character and 1 uppercase letter
     Type: String
     NoEcho: 'true'
+    Default: IbmAwsImmersionday!23
   NodeType:
     Default: dc2.large
     AllowedValues:
@@ -245,6 +246,7 @@ Parameters:
     MinLength: '8'
     NoEcho: 'true'
     Default: ''
+    Default: IbmAwsImmersionday!23
   AuroraDBInstanceClass:
     Description: Database Instance Class
     Type: String

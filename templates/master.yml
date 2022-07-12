@@ -173,7 +173,7 @@ Parameters:
     Description: >-
       The cloud formation S3 bucket. This contains all template and config in respective folders.
     Type: String
-    Default:
+    Default: ImmersionDayBucket
   RedshiftClusterName:
       Description: Name of the redshift Cluster
       Type: String

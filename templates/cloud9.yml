@@ -326,6 +326,7 @@ Resources:
     Properties:
       Description: AWS Cloud9 instance for ImmersionDays
       AutomaticStopTimeMinutes: 3600
+      ImageId: amazonlinux-2-x86_64
       InstanceType:
         Ref: C9InstanceType
       Name:
@@ -350,4 +351,3 @@ Outputs:
         - Ref: C9Instance
         - "?region="
         - Ref: AWS::Region
-

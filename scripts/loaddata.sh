@@ -9,11 +9,6 @@ function load_data_s3() {
   export aws_secret_access_key=$(aws secretsmanager get-secret-value --secret-id S3ImmerssiondayBucketSecrets | jq -r ".SecretString" | jq -r ".aws_secret_access_key")
   export aws_access_key_id=$(aws secretsmanager get-secret-value --secret-id S3ImmerssiondayBucketSecrets | jq -r ".SecretString" | jq -r ".aws_access_key_id")
   cd ..;aws s3 cp s3/data/ s3://$S3Bucket/ --recursive
-
-  echo S3Bucket=$S3Bucket
-  echo Secret_Key=$aws_secret_access_key
-  echo Access_key=$aws_access_key_id
-
 }
 
 #==========================
@@ -28,17 +23,29 @@ function load_data_redshit() {
   export REDSHIFT_DBNAME=$(aws secretsmanager get-secret-value --secret-id RedshiftImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RedshiftDBName")
   # Call Fat Jar
   java -jar redshift-data-loading-prod.jar $REDSHIFT_ENDPOINT $REDSHIFT_PORT $REDSHIFT_DBNAME $REDSHIFT_USERNAME $REDSHIFT_PASSWORD
-
-  echo RedShift_Username=$REDSHIFT_USERNAME
-  echo RedShift_Password=$REDSHIFT_PASSWORD
-  echo RedShift_Database_Name=$REDSHIFT_DBNAME
-  echo RedShift_Port=$REDSHIFT_PORT
 }
 
 #====================
 # Loading Data to RDS
 #====================
 function load_data_rds() {
+
+
+  echo "******************* Installing Postgresql *******************"
+sudo tee /etc/yum.repos.d/pgdg.repo<<EOF
+[pgdg13]
+name=PostgreSQL 13 for RHEL/CentOS 7 - x86_64
+baseurl=https://download.postgresql.org/pub/repos/yum/13/redhat/rhel-7-x86_64
+enabled=1
+gpgcheck=0
+EOF
+
+  sudo yum update -y -q
+  sudo yum install postgresql13 postgresql13-server -y -q
+  sudo /usr/pgsql-13/bin/postgresql-13-setup initdb
+  sudo systemctl enable --now postgresql-13
+
+
   echo "******************* Loading Data to RDS *******************"
   # retrieve rds details from secretmanager
   export PGENDPOINT=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RDSEndpoint")
@@ -46,12 +53,6 @@ function load_data_rds() {
   export PGUSERNAME=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RDSUserName")
   export PGPASSWORD=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RDSPassword")
   export PGDBNAME=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RDSDbname")
-
-
-  echo Postgres_Username=$PGUSERNAME
-  echo Postgres_Password=$PGPASSWORD
-  echo Postgres_Database_Name=$PGDBNAME
-  echo Postgres_Port=$PGPORT
 
   # drop DB tables
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "drop table if exists \"public\".\"CASES_AGESEX_refined\" cascade"
@@ -242,7 +243,51 @@ function load_data_rds() {
   rm -rf ./csv/ || true
 }
 
-#Loading Data.
-load_data_s3
+#===============================================
+# Printing Crdentials for S3, RedShift, Postgres
+#===============================================
+
+function print_values() {
+  echo
+  echo "********************** S3 Information **********************"
+  export S3Bucket=$(aws secretsmanager get-secret-value --secret-id S3ImmerssiondayBucketSecrets | jq -r ".SecretString" | jq -r ".S3Bucket")
+  export S3BucketArn=$(aws secretsmanager get-secret-value --secret-id S3ImmerssiondayBucketSecrets | jq -r ".SecretString" | jq -r ".S3BucketArn")
+  export aws_secret_access_key=$(aws secretsmanager get-secret-value --secret-id S3ImmerssiondayBucketSecrets | jq -r ".SecretString" | jq -r ".aws_secret_access_key")
+  export aws_access_key_id=$(aws secretsmanager get-secret-value --secret-id S3ImmerssiondayBucketSecrets | jq -r ".SecretString" | jq -r ".aws_access_key_id")
+
+  echo S3Bucket=$S3Bucket
+  echo Secret_Key=$aws_secret_access_key
+  echo Access_key=$aws_access_key_id
+  echo
+  echo "******************* RedShift Information *******************"
+  export REDSHIFT_ENDPOINT=$(aws secretsmanager get-secret-value --secret-id RedshiftImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RedshiftEndpoint")
+  export REDSHIFT_PORT=$(aws secretsmanager get-secret-value --secret-id RedshiftImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RedshiftPort")
+  export REDSHIFT_USERNAME=$(aws secretsmanager get-secret-value --secret-id RedshiftImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RedshiftMasterUsername")
+  export REDSHIFT_PASSWORD=$(aws secretsmanager get-secret-value --secret-id RedshiftImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RedshiftMasterPassword")
+  export REDSHIFT_DBNAME=$(aws secretsmanager get-secret-value --secret-id RedshiftImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RedshiftDBName")
+
+  echo RedShift_Username=$REDSHIFT_USERNAME
+  echo RedShift_Password=$REDSHIFT_PASSWORD
+  echo RedShift_Database_Name=$REDSHIFT_DBNAME
+  echo RedShift_Port=$REDSHIFT_PORT
+  echo
+  echo "******************* Postgres Information *******************"
+  # retrieve rds details from secretmanager
+  export PGENDPOINT=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RDSEndpoint")
+  export PGPORT=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RDSPort")
+  export PGUSERNAME=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RDSUserName")
+  export PGPASSWORD=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RDSPassword")
+  export PGDBNAME=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RDSDbname")
+
+  echo Postgres_Username=$PGUSERNAME
+  echo Postgres_Password=$PGPASSWORD
+  echo Postgres_Database_Name=$PGDBNAME
+  echo Postgres_Port=$PGPORT
+  echo
+  echo "*************************** End ****************************"
+}
+
 load_data_redshit
 load_data_rds
+load_data_s3
+print_values

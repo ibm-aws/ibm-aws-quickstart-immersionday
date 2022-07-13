@@ -287,7 +287,7 @@ function print_values() {
   echo "*************************** End ****************************"
 }
 
-load_data_s3
 load_data_redshit
 load_data_rds
+load_data_s3
 print_values

@@ -212,7 +212,7 @@ Resources:
             - echo LANG=en_US.utf-8 >> /etc/environment
             - echo LC_ALL=en_US.UTF-8 >> /etc/environment
             - . /home/ec2-user/.bashrc
-            - yum -y remove aws-cli; yum -y install sqlite telnet jq strace tree gcc glibc-static python3 python3-pip gettext bash-completion
+            - yum -y install sqlite telnet jq strace tree gcc glibc-static python3 python3-pip gettext bash-completion
             - echo '=== CONFIGURE default python version ==='
             - PATH=$PATH:/usr/bin
             - alternatives --set python /usr/bin/python3.6

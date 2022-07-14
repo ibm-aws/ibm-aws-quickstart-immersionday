@@ -23,10 +23,11 @@ function create_users() {
     curl -k -X POST -H "Authorization: Bearer $token" -H "cache-control: no-cache" -d "{\"user_name\":\"datascientist$ram\",\"password\":\"password\",\"displayName\":\"datascientist$ram\",\"permissions\":[\"sign_in_only\"],\"user_roles\":[\"zen_user_role\"],\"email\":\"datascientist@test.com\"}" "https://$route/icp4d-api/v1/users" -H "Content-Type: application/json"
 
     echo "Users created successfully."
+    echo "Password for both user$ram and datascientist$ram is: password"
   else
     echo "Error in CP4D Token extraction"
   fi
 }
 
-#Create Users.
+#Create Users
 create_users

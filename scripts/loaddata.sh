@@ -193,7 +193,7 @@ EOF
   wget -q $GITHUBURL/raw/main/rds/csv/ts_brussels_region_table.csv -O ./csv/ts_brussels_region_table.csv
   wget -q $GITHUBURL/raw/main/rds/csv/ts_flanders_region_table.csv -O ./csv/ts_flanders_region_table.csv
   wget -q $GITHUBURL/raw/main/rds/csv/ts_regional_covid_statistics_table.csv -O ./csv/ts_regional_covid_statistics_table.csv
-  wget -q $GITHUBURL/raw/main/rds/csv/ts_regional_risk_index_table.csv -O ./csv/ts_regional_risk_index_table.csv
+  wget -q $GITHUBURL/raw/main/rds/csv/ts-data-region-RI.csv -O ./csv/ts-data-region-RI.csv
   wget -q $GITHUBURL/raw/main/rds/csv/ts_wallonia_region_table.csv -O ./csv/ts_wallonia_region_table.csv
   wget -q $GITHUBURL/raw/main/rds/csv/vacc.csv -O ./csv/vacc.csv
 
@@ -235,7 +235,7 @@ EOF
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"ts_brussels_region_table\" from './csv/ts_brussels_region_table.csv' delimiter ',' CSV HEADER"
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"ts_flanders_region_table\" from './csv/ts_flanders_region_table.csv' delimiter ',' CSV HEADER"
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"ts_regional_covid_statistics_table\" from './csv/ts_regional_covid_statistics_table.csv' delimiter ',' CSV HEADER"
-  psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"ts_regional_risk_index_table\" from './csv/ts_regional_risk_index_table.csv' delimiter ',' CSV HEADER"
+  psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"ts-data-region-RI\" from './csv/ts-data-region-RI.csv' delimiter ',' CSV HEADER"
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"ts_wallonia_region_table\" from './csv/ts_wallonia_region_table.csv' delimiter ',' CSV HEADER"
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"vacc\" from './csv/vacc.csv' delimiter ',' CSV HEADER"
 

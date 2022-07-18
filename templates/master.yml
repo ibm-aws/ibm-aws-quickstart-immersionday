@@ -312,7 +312,7 @@ Resources:
       Properties:
         TemplateURL: !Join
                 - ''
-                - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/VPC.yml
+                - - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/VPC.yml
         Parameters:
           AvailabilityZones: !Join [ ',', !Ref 'AvailabilityZones']
           NumberOfAZs: !Ref  NumberOfAZs
@@ -333,14 +333,14 @@ Resources:
       Properties:
         TemplateURL: !Join
                 - ''
-                - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/s3.yml
+                - - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/s3.yml
 
     Cloud9Stack:
       Type: AWS::CloudFormation::Stack
       Properties:
         TemplateURL: !Join
                 - ''
-                - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/cloud9.yml
+                - - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/cloud9.yml
         Parameters:
           C9InstanceType: !Ref 'C9InstanceType'
           C9InstanceVolumeSize: !Ref 'C9InstanceVolumeSize'
@@ -351,7 +351,7 @@ Resources:
       Properties:
         TemplateURL: !Join
                 - ''
-                - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/aurora.yml
+                - - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/aurora.yml
         Parameters:
           DBName: !Ref AuroraDBName
           DBPort: !Ref AuroraDBPort
@@ -372,7 +372,7 @@ Resources:
       Properties:
         TemplateURL: !Join
                 - ''
-                - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/redshift.yml
+                - - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/redshift.yml
         Parameters:
           VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
           PublicSubnet1ID: !GetAtt 'VPCStack.Outputs.PublicSubnet1ID'

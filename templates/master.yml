@@ -17,10 +17,6 @@ Metadata:
           - PublicSubnet3CIDR
           - BastionNodeAccessCIDR
       - Label:
-          default: Cloud formation S3 bucket
-        Parameters:
-          - CloudFormationS3Bucket
-      - Label:
           default: Cloud9
         Parameters:
           - C9InstanceType
@@ -69,8 +65,6 @@ Metadata:
         default: Public subnet 3 CIDR
       BastionNodeAccessCIDR:
         default: Bastion node external access CIDR
-      CloudFormationS3Bucket:
-        default: Cloud formation S3 bucket
       C9InstanceType:
         default: Cloud9 Instance Type
       C9OwnerArn:
@@ -169,11 +163,6 @@ Parameters:
     Description: The CIDR IP range that is permitted to access boot node instance. We recommend that you set this value to a trusted IP range. The value `0.0.0.0/0` permits all IP addresses to access. Additional values can be added post-deployment from the Amazon EC2 console.
     Type: String
     Default: 0.0.0.0/0
-  CloudFormationS3Bucket:
-    Description: >-
-      The cloud formation S3 bucket. This contains all template and config in respective folders.
-    Type: String
-    Default: ""
   RedshiftClusterName:
       Description: Name of the redshift Cluster
       Type: String
@@ -323,9 +312,7 @@ Resources:
       Properties:
         TemplateURL: !Join
                 - ''
-                - - https://s3.amazonaws.com/
-                  - !Ref CloudFormationS3Bucket
-                  - /templates/VPC.yml
+                - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/VPC.yml
         Parameters:
           AvailabilityZones: !Join [ ',', !Ref 'AvailabilityZones']
           NumberOfAZs: !Ref  NumberOfAZs
@@ -346,18 +333,14 @@ Resources:
       Properties:
         TemplateURL: !Join
                 - ''
-                - - https://s3.amazonaws.com/
-                  - !Ref CloudFormationS3Bucket
-                  - /templates/s3.yml
+                - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/s3.yml
 
     Cloud9Stack:
       Type: AWS::CloudFormation::Stack
       Properties:
         TemplateURL: !Join
                 - ''
-                - - https://s3.amazonaws.com/
-                  - !Ref CloudFormationS3Bucket
-                  - /templates/cloud9.yml
+                - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/cloud9.yml
         Parameters:
           C9InstanceType: !Ref 'C9InstanceType'
           C9InstanceVolumeSize: !Ref 'C9InstanceVolumeSize'
@@ -368,9 +351,7 @@ Resources:
       Properties:
         TemplateURL: !Join
                 - ''
-                - - https://s3.amazonaws.com/
-                  - !Ref CloudFormationS3Bucket
-                  - /templates/aurora.yml
+                - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/aurora.yml
         Parameters:
           DBName: !Ref AuroraDBName
           DBPort: !Ref AuroraDBPort
@@ -391,9 +372,7 @@ Resources:
       Properties:
         TemplateURL: !Join
                 - ''
-                - - https://s3.amazonaws.com/
-                  - !Ref CloudFormationS3Bucket
-                  - /templates/redshift.yml
+                - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/redshift.yml
         Parameters:
           VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
           PublicSubnet1ID: !GetAtt 'VPCStack.Outputs.PublicSubnet1ID'

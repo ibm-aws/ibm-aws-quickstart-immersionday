@@ -12,6 +12,7 @@ function print_values() {
   export aws_access_key_id=$(aws secretsmanager get-secret-value --secret-id S3ImmerssiondayBucketSecrets | jq -r ".SecretString" | jq -r ".aws_access_key_id")
 
   echo S3Bucket=$S3Bucket
+  echo S3BucketArn=$S3BucketArn
   echo Secret_Key=$aws_secret_access_key
   echo Access_key=$aws_access_key_id
   echo
@@ -26,6 +27,7 @@ function print_values() {
   echo RedShift_Password=$REDSHIFT_PASSWORD
   echo RedShift_Database_Name=$REDSHIFT_DBNAME
   echo RedShift_Port=$REDSHIFT_PORT
+  echo REDSHIFT_Endpoint=$REDSHIFT_ENDPOINT
   echo
   echo "******************* Postgres Information *******************"
   # retrieve rds details from secretmanager
@@ -39,6 +41,7 @@ function print_values() {
   echo Postgres_Password=$PGPASSWORD
   echo Postgres_Database_Name=$PGDBNAME
   echo Postgres_Port=$PGPORT
+  echo Postgres_Endpoint=$PGENDPOINT
   echo
   echo "*************************** End ****************************"
 }

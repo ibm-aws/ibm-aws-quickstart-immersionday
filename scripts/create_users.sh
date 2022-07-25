@@ -30,8 +30,7 @@ function create_users() {
     curl -s -k -X GET "https://$route/zen-data/v3/service_instances?fetch_all_instances=true" -H "Authorization: Bearer $token" | jq -r '.service_instances[] | .id' > /tmp/id.txt
 
     while read line
-    do
-        echo "Granting Permissions to $line Instance"
+    do  
     	curl --silent --output /dev/null --show-error --fail -k -X POST "https://$route/zen-data/v2/serviceInstance/users/" -H "authorization: Bearer $token" -H "Content-Type: application/json" -d "{ \"serviceInstanceID\": \"$line\", \"users\": [{ \"role\": \"Admin\", \"uid\": \"$user_id\", \"username\": \"user$ram\" }] }"
     done < /tmp/id.txt
 

@@ -43,6 +43,10 @@ function print_values() {
   echo Postgres_Port=$PGPORT
   echo Postgres_Endpoint=$PGENDPOINT
   echo
+  echo "************** Sagemaker role arn Information **************"
+  export SAGEMAKERROLEARN=$(aws iam get-role --role-name=SagemakerFullAccessRole | jq -r ".Role.Arn")
+  echo SageMakerRole_Arn=$SAGEMAKERROLEARN
+  echo
   echo "*************************** End ****************************"
 }
 

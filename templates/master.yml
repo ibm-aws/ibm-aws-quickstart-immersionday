@@ -321,6 +321,13 @@ Resources:
           PublicSubnetTag3: "kubernetes.io/role/elb="
           VPCCIDR: !Ref 'VPCCIDR'
 
+    IAMUserStack:
+      Type: AWS::CloudFormation::Stack
+      Properties:
+        TemplateURL: !Join
+                - ''
+                - - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/iam.yml
+
     S3BucketStack:
       Type: AWS::CloudFormation::Stack
       Properties:

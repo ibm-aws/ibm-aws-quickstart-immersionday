@@ -244,6 +244,37 @@ EOF
 }
 
 #===============================================
+# Creating SageMaker role
+#===============================================
+
+function create_sagemaker_role() {
+ export ROLENAME="SagemakerFullAccessRole"
+ echo "Creating $ROLENAME if not exists"
+ export sageMakeRoleName=$(aws iam list-roles | jq -r '.Roles[].RoleName' | grep "$ROLENAME" | awk '{ print $1 }' | wc -c)
+ if [ "$sageMakeRoleName" -ne 0 ]; then
+        echo "$ROLENAME role is already exist"
+ else
+ cat <<EOF > $PWD/TrustPolicy.json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "sagemaker.amazonaws.com"
+            },
+            "Action": "sts:AssumeRole"
+        }
+    ]
+}
+EOF
+ aws iam create-role --role-name "$ROLENAME" --assume-role-policy-document file://TrustPolicy.json
+ aws iam attach-role-policy --role-name "$ROLENAME" --policy-arn "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"
+
+ fi
+}
+
+#===============================================
 # Printing Crdentials for S3, RedShift, Postgres
 #===============================================
 
@@ -290,4 +321,5 @@ function print_values() {
 load_data_redshit
 load_data_rds
 load_data_s3
+create_sagemaker_role
 print_values

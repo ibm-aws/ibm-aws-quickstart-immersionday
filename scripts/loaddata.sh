@@ -297,7 +297,7 @@ function print_values() {
   export REDSHIFT_PASSWORD=$(aws secretsmanager get-secret-value --secret-id RedshiftImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RedshiftMasterPassword")
   export REDSHIFT_DBNAME=$(aws secretsmanager get-secret-value --secret-id RedshiftImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RedshiftDBName")
 
-  echo REDSHIFT_ENDPOINT=$REDSHIFT_ENDPOINT
+  echo RedShift_Endpoint=$REDSHIFT_ENDPOINT
   echo RedShift_Username=$REDSHIFT_USERNAME
   echo RedShift_Password=$REDSHIFT_PASSWORD
   echo RedShift_Database_Name=$REDSHIFT_DBNAME
@@ -311,7 +311,7 @@ function print_values() {
   export PGPASSWORD=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RDSPassword")
   export PGDBNAME=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RDSDbname")
 
-  echo PGENDPOINT=$PGENDPOINT
+  echo Postgres_Endpoint=$PGENDPOINT
   echo Postgres_Username=$PGUSERNAME
   echo Postgres_Password=$PGPASSWORD
   echo Postgres_Database_Name=$PGDBNAME
@@ -330,7 +330,7 @@ function print_values() {
   echo SageMaker_Access_key=$SAGEMAKERACCESSKEY
   echo
   echo "*************************** End ****************************"
-  
+
 }
 
 load_data_redshit

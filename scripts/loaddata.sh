@@ -287,6 +287,7 @@ function print_values() {
   export aws_access_key_id=$(aws secretsmanager get-secret-value --secret-id S3ImmerssiondayBucketSecrets | jq -r ".SecretString" | jq -r ".aws_access_key_id")
 
   echo S3Bucket=$S3Bucket
+  echo S3BucketArn=$S3BucketArn
   echo Secret_Key=$aws_secret_access_key
   echo Access_key=$aws_access_key_id
   echo
@@ -297,6 +298,7 @@ function print_values() {
   export REDSHIFT_PASSWORD=$(aws secretsmanager get-secret-value --secret-id RedshiftImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RedshiftMasterPassword")
   export REDSHIFT_DBNAME=$(aws secretsmanager get-secret-value --secret-id RedshiftImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RedshiftDBName")
 
+  echo REDSHIFT_ENDPOINT=$REDSHIFT_ENDPOINT
   echo RedShift_Username=$REDSHIFT_USERNAME
   echo RedShift_Password=$REDSHIFT_PASSWORD
   echo RedShift_Database_Name=$REDSHIFT_DBNAME
@@ -310,12 +312,26 @@ function print_values() {
   export PGPASSWORD=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RDSPassword")
   export PGDBNAME=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RDSDbname")
 
+  echo PGENDPOINT=$PGENDPOINT
   echo Postgres_Username=$PGUSERNAME
   echo Postgres_Password=$PGPASSWORD
   echo Postgres_Database_Name=$PGDBNAME
   echo Postgres_Port=$PGPORT
   echo
   echo "*************************** End ****************************"
+
+  echo "************** Sagemaker role arn Information **************"
+  export SAGEMAKERROLEARN=$(aws iam get-role --role-name=SagemakerFullAccessRole | jq -r ".Role.Arn")
+  echo SageMakerRole_Arn=$SAGEMAKERROLEARN
+  echo
+  echo "********************** SageMaker Information **********************"
+  export SAGEMAKERSECRETACCESSKEY=$(aws secretsmanager get-secret-value --secret-id AdminUserCredentialSecret | jq -r ".SecretString" | jq -r ".admin_user_secret_access_key")
+  export SAGEMAKERACCESSKEY=$(aws secretsmanager get-secret-value --secret-id AdminUserCredentialSecret | jq -r ".SecretString" | jq -r ".admin_user_access_key_id")
+  echo SageMaker_Secret_Key=$SAGEMAKERSECRETACCESSKEY
+  echo SageMaker_Access_key=$SAGEMAKERACCESSKEY
+  echo
+  echo "*************************** End ****************************"
+  
 }
 
 load_data_redshit

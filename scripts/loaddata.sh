@@ -339,8 +339,8 @@ function print_values() {
 
 }
 
+create_sagemaker_role
 load_data_redshit
 load_data_rds
 load_data_s3
-create_sagemaker_role
 print_values

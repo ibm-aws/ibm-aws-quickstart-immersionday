@@ -249,10 +249,10 @@ EOF
 
 function create_sagemaker_role() {
  export ROLENAME="SagemakerFullAccessRole"
- echo "Creating $ROLENAME if not exists"
+ echo ""
  export sageMakeRoleName=$(aws iam list-roles | jq -r '.Roles[].RoleName' | grep "$ROLENAME" | awk '{ print $1 }' | wc -c)
  if [ "$sageMakeRoleName" -ne 0 ]; then
-        echo "$ROLENAME role is already exist"
+        echo ""
  else
  cat <<EOF > $PWD/TrustPolicy.json
 {
@@ -268,9 +268,8 @@ function create_sagemaker_role() {
     ]
 }
 EOF
- aws iam create-role --role-name "$ROLENAME" --assume-role-policy-document file://TrustPolicy.json
- aws iam attach-role-policy --role-name "$ROLENAME" --policy-arn "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"
-
+export createRoleOut=$(aws iam create-role --role-name "$ROLENAME" --assume-role-policy-document file://TrustPolicy.json)
+export attachRolePolicOut=$( aws iam attach-role-policy --role-name "$ROLENAME" --policy-arn "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess")
  fi
 }
 

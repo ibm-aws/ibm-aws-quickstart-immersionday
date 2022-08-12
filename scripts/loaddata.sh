@@ -248,6 +248,12 @@ EOF
 #===============================================
 
 function create_sagemaker_role() {
+ 
+ export ACCESSKEYID=$(aws secretsmanager get-secret-value --secret-id AdminUserCredentialSecret | jq -r ".SecretString" | jq -r ".admin_user_secret_access_key")
+ export SECRETKEYID=$(aws secretsmanager get-secret-value --secret-id AdminUserCredentialSecret | jq -r ".SecretString" | jq -r ".admin_user_access_key_id")
+ export REGION=`curl http://169.254.169.254/latest/dynamic/instance-identity/document|grep region|awk -F\" '{print $4}'`
+ aws configure set aws_access_key_id $ACCESSKEYID; aws configure set aws_secret_access_key $SECRETKEYID; aws configure set default.region $REGION
+ 
  export ROLENAME="SagemakerFullAccessRole"
  echo ""
  export sageMakeRoleName=$(aws iam list-roles | jq -r '.Roles[].RoleName' | grep "$ROLENAME" | awk '{ print $1 }' | wc -c)

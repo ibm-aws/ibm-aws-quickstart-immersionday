@@ -248,12 +248,15 @@ EOF
 #===============================================
 
 function create_sagemaker_role() {
- rm ~/.aws/credentials
- 
+ rm -vf ${HOME}/.aws/credentials
+ test -n "$AWS_REGION" && echo AWS_REGION is "$AWS_REGION" || echo AWS_REGION is not set
+ export REGION=`curl http://169.254.169.254/latest/dynamic/instance-identity/document|grep region|awk -F\" '{print $4}'`
+ aws configure set default.region $REGION
+
  export ACCESSKEYID=$(aws secretsmanager get-secret-value --secret-id AdminUserCredentialSecret | jq -r ".SecretString" | jq -r ".admin_user_secret_access_key")
  export SECRETKEYID=$(aws secretsmanager get-secret-value --secret-id AdminUserCredentialSecret | jq -r ".SecretString" | jq -r ".admin_user_access_key_id")
- export REGION=`curl http://169.254.169.254/latest/dynamic/instance-identity/document|grep region|awk -F\" '{print $4}'`
- aws configure set aws_access_key_id $ACCESSKEYID; aws configure set aws_secret_access_key $SECRETKEYID; aws configure set default.region $REGION
+ aws configure set aws_access_key_id $ACCESSKEYID;
+ aws configure set aws_secret_access_key $SECRETKEYID;
  
  export ROLENAME="SagemakerFullAccessRole"
  echo ""

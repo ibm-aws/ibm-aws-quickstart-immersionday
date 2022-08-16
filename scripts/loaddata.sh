@@ -248,6 +248,13 @@ EOF
 #===============================================
 
 function create_sagemaker_role() {
+ curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+ unzip awscliv2.zip
+ sudo ./aws/install
+ sudo cp /usr/local/bin/aws /usr/bin/
+ aws --version
+ aws cloud9 update-environment  --environment-id $C9_PID --managed-credentials-action DISABLE
+ 
  rm -vf ${HOME}/.aws/credentials
  test -n "$AWS_REGION" && echo AWS_REGION is "$AWS_REGION" || echo AWS_REGION is not set
  export REGION=`curl http://169.254.169.254/latest/dynamic/instance-identity/document|grep region|awk -F\" '{print $4}'`

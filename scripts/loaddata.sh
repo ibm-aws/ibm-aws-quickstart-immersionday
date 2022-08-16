@@ -281,6 +281,31 @@ EOF
 export createRoleOut=$(aws iam create-role --role-name "$ROLENAME" --assume-role-policy-document file://TrustPolicy.json)
 export attachRolePolicOut=$( aws iam attach-role-policy --role-name "$ROLENAME" --policy-arn "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess")
  fi
+ 
+ export AWSSAGEMAKERSERVICEROLE="ServiceRoleForAmazonSageMakerNotebooks"
+ echo ""
+ export awsServiceRoleForAmazonSageMakerNotebooks=$(aws iam list-roles | jq -r '.Roles[].RoleName' | grep "$AWSSAGEMAKERSERVICEROLE" | awk '{ print $1 }' | wc -c)
+ if [ "$awsServiceRoleForAmazonSageMakerNotebooks" -ne 0 ]; then
+                 echo ""
+ else
+  cat <<EOF > $PWD/TrustPolicy1.json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+                "Effect": "Allow",
+                "Principal": {
+                        "Service": "sagemaker.amazonaws.com"
+                },
+                "Action": "sts:AssumeRole"
+        }
+        ]
+}
+EOF
+export createRoleOut1=$(aws iam create-role --role-name "$AWSSAGEMAKERSERVICEROLE" --assume-role-policy-document file://TrustPolicy1.json)
+export attachRolePolicOut1=$( aws iam attach-role-policy --role-name "$AWSSAGEMAKERSERVICEROLE" --policy-arn "arn:aws:iam::aws:policy/AmazonSageMakerNotebooksServiceRolePolicy")
+
+ fi
 }
 
 #===============================================
@@ -332,6 +357,8 @@ function print_values() {
   echo "************** Sagemaker role arn Information **************"
   export SAGEMAKERROLEARN=$(aws iam get-role --role-name=SagemakerFullAccessRole | jq -r ".Role.Arn")
   echo SageMakerRole_Arn=$SAGEMAKERROLEARN
+  export AWSSAGEMAKERSERVICEROLE=$(aws iam get-role --role-name=ServiceRoleForAmazonSageMakerNotebooks | jq -r ".Role.Arn")
+  echo ServiceRoleForAmazonSageMakerNoteBook=$AWSSAGEMAKERSERVICEROLE
   echo
   echo "********************** SageMaker Information **********************"
   export SAGEMAKERSECRETACCESSKEY=$(aws secretsmanager get-secret-value --secret-id AdminUserCredentialSecret | jq -r ".SecretString" | jq -r ".admin_user_secret_access_key")

@@ -248,6 +248,7 @@ EOF
 #===============================================
 
 function create_sagemaker_role() {
+ rm ~/.aws/credentials
  
  export ACCESSKEYID=$(aws secretsmanager get-secret-value --secret-id AdminUserCredentialSecret | jq -r ".SecretString" | jq -r ".admin_user_secret_access_key")
  export SECRETKEYID=$(aws secretsmanager get-secret-value --secret-id AdminUserCredentialSecret | jq -r ".SecretString" | jq -r ".admin_user_access_key_id")

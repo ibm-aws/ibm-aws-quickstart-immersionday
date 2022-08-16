@@ -336,8 +336,8 @@ function print_values() {
   echo "********************** SageMaker Information **********************"
   export SAGEMAKERSECRETACCESSKEY=$(aws secretsmanager get-secret-value --secret-id AdminUserCredentialSecret | jq -r ".SecretString" | jq -r ".admin_user_secret_access_key")
   export SAGEMAKERACCESSKEY=$(aws secretsmanager get-secret-value --secret-id AdminUserCredentialSecret | jq -r ".SecretString" | jq -r ".admin_user_access_key_id")
-  echo SageMaker_Secret_Key=$SAGEMAKERSECRETACCESSKEY
-  echo SageMaker_Access_key=$SAGEMAKERACCESSKEY
+  echo SageMaker_Access_Key=$SAGEMAKERSECRETACCESSKEY
+  echo SageMaker_Secret_key=$SAGEMAKERACCESSKEY
   echo
   echo "*************************** End ****************************"
 

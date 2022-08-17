@@ -46,6 +46,8 @@ function print_values() {
   echo "************** Sagemaker role arn Information **************"
   export SAGEMAKERROLEARN=$(aws iam get-role --role-name=SagemakerFullAccessRole | jq -r ".Role.Arn")
   echo SageMakerRole_Arn=$SAGEMAKERROLEARN
+  export AWSSAGEMAKERSERVICEROLE=$(aws iam get-role --role-name=ServiceRoleForAmazonSageMakerNotebooks | jq -r ".Role.Arn")
+  echo ServiceRoleForAmazonSageMakerNoteBook=$AWSSAGEMAKERSERVICEROLE
   echo
   echo "********************** SageMaker Information **********************"
   export SAGEMAKERSECRETACCESSKEY=$(aws secretsmanager get-secret-value --secret-id AdminUserCredentialSecret | jq -r ".SecretString" | jq -r ".admin_user_secret_access_key")

@@ -248,11 +248,28 @@ EOF
 #===============================================
 
 function create_sagemaker_role() {
+ curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+ unzip awscliv2.zip
+ sudo ./aws/install
+ sudo cp /usr/local/bin/aws /usr/bin/
+ aws --version
+ aws cloud9 update-environment  --environment-id $C9_PID --managed-credentials-action DISABLE
+ 
+ rm -vf ${HOME}/.aws/credentials
+ test -n "$AWS_REGION" && echo AWS_REGION is "$AWS_REGION" || echo AWS_REGION is not set
+ export REGION=`curl http://169.254.169.254/latest/dynamic/instance-identity/document|grep region|awk -F\" '{print $4}'`
+ aws configure set default.region $REGION
+
+ export ACCESSKEYID=$(aws secretsmanager get-secret-value --secret-id AdminUserCredentialSecret | jq -r ".SecretString" | jq -r ".admin_user_secret_access_key")
+ export SECRETKEYID=$(aws secretsmanager get-secret-value --secret-id AdminUserCredentialSecret | jq -r ".SecretString" | jq -r ".admin_user_access_key_id")
+ aws configure set aws_access_key_id $ACCESSKEYID;
+ aws configure set aws_secret_access_key $SECRETKEYID;
+ 
  export ROLENAME="SagemakerFullAccessRole"
- echo "Creating $ROLENAME if not exists"
+ echo ""
  export sageMakeRoleName=$(aws iam list-roles | jq -r '.Roles[].RoleName' | grep "$ROLENAME" | awk '{ print $1 }' | wc -c)
  if [ "$sageMakeRoleName" -ne 0 ]; then
-        echo "$ROLENAME role is already exist"
+        echo ""
  else
  cat <<EOF > $PWD/TrustPolicy.json
 {
@@ -268,8 +285,32 @@ function create_sagemaker_role() {
     ]
 }
 EOF
- aws iam create-role --role-name "$ROLENAME" --assume-role-policy-document file://TrustPolicy.json
- aws iam attach-role-policy --role-name "$ROLENAME" --policy-arn "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"
+export createRoleOut=$(aws iam create-role --role-name "$ROLENAME" --assume-role-policy-document file://TrustPolicy.json)
+export attachRolePolicOut=$( aws iam attach-role-policy --role-name "$ROLENAME" --policy-arn "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess")
+ fi
+ 
+ export AWSSAGEMAKERSERVICEROLE="ServiceRoleForAmazonSageMakerNotebooks"
+ echo ""
+ export awsServiceRoleForAmazonSageMakerNotebooks=$(aws iam list-roles | jq -r '.Roles[].RoleName' | grep "$AWSSAGEMAKERSERVICEROLE" | awk '{ print $1 }' | wc -c)
+ if [ "$awsServiceRoleForAmazonSageMakerNotebooks" -ne 0 ]; then
+                 echo ""
+ else
+  cat <<EOF > $PWD/TrustPolicy1.json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+                "Effect": "Allow",
+                "Principal": {
+                        "Service": "sagemaker.amazonaws.com"
+                },
+                "Action": "sts:AssumeRole"
+        }
+        ]
+}
+EOF
+export createRoleOut1=$(aws iam create-role --role-name "$AWSSAGEMAKERSERVICEROLE" --assume-role-policy-document file://TrustPolicy1.json)
+export attachRolePolicOut1=$( aws iam attach-role-policy --role-name "$AWSSAGEMAKERSERVICEROLE" --policy-arn "arn:aws:iam::aws:policy/AmazonSageMakerNotebooksServiceRolePolicy")
 
  fi
 }
@@ -287,6 +328,7 @@ function print_values() {
   export aws_access_key_id=$(aws secretsmanager get-secret-value --secret-id S3ImmerssiondayBucketSecrets | jq -r ".SecretString" | jq -r ".aws_access_key_id")
 
   echo S3Bucket=$S3Bucket
+  echo S3BucketArn=$S3BucketArn
   echo Secret_Key=$aws_secret_access_key
   echo Access_key=$aws_access_key_id
   echo
@@ -297,6 +339,7 @@ function print_values() {
   export REDSHIFT_PASSWORD=$(aws secretsmanager get-secret-value --secret-id RedshiftImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RedshiftMasterPassword")
   export REDSHIFT_DBNAME=$(aws secretsmanager get-secret-value --secret-id RedshiftImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RedshiftDBName")
 
+  echo RedShift_Endpoint=$REDSHIFT_ENDPOINT
   echo RedShift_Username=$REDSHIFT_USERNAME
   echo RedShift_Password=$REDSHIFT_PASSWORD
   echo RedShift_Database_Name=$REDSHIFT_DBNAME
@@ -310,16 +353,32 @@ function print_values() {
   export PGPASSWORD=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RDSPassword")
   export PGDBNAME=$(aws secretsmanager get-secret-value --secret-id RDSImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RDSDbname")
 
+  echo Postgres_Endpoint=$PGENDPOINT
   echo Postgres_Username=$PGUSERNAME
   echo Postgres_Password=$PGPASSWORD
   echo Postgres_Database_Name=$PGDBNAME
   echo Postgres_Port=$PGPORT
   echo
   echo "*************************** End ****************************"
+
+  echo "************** Sagemaker role arn Information **************"
+  export SAGEMAKERROLEARN=$(aws iam get-role --role-name=SagemakerFullAccessRole | jq -r ".Role.Arn")
+  echo SageMakerRole_Arn=$SAGEMAKERROLEARN
+  export AWSSAGEMAKERSERVICEROLE=$(aws iam get-role --role-name=ServiceRoleForAmazonSageMakerNotebooks | jq -r ".Role.Arn")
+  echo ServiceRoleForAmazonSageMakerNoteBook=$AWSSAGEMAKERSERVICEROLE
+  echo
+  echo "********************** SageMaker Information **********************"
+  export SAGEMAKERSECRETACCESSKEY=$(aws secretsmanager get-secret-value --secret-id AdminUserCredentialSecret | jq -r ".SecretString" | jq -r ".admin_user_secret_access_key")
+  export SAGEMAKERACCESSKEY=$(aws secretsmanager get-secret-value --secret-id AdminUserCredentialSecret | jq -r ".SecretString" | jq -r ".admin_user_access_key_id")
+  echo SageMaker_Access_Key=$SAGEMAKERSECRETACCESSKEY
+  echo SageMaker_Secret_key=$SAGEMAKERACCESSKEY
+  echo
+  echo "*************************** End ****************************"
+
 }
 
+create_sagemaker_role
 load_data_redshit
 load_data_rds
 load_data_s3
-create_sagemaker_role
 print_values

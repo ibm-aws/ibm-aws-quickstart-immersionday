@@ -254,14 +254,14 @@ function cloud9_disable_temp_credential() {
  sudo cp /usr/local/bin/aws /usr/bin/
  aws --version
 
- test -n "$AWS_REGION" && echo AWS_REGION is "$AWS_REGION" || echo AWS_REGION is not set
  export AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
  export ACCOUNT_ID=$(aws sts get-caller-identity --output text --query Account)
  aws configure set default.region $AWS_REGION
- echo "export ACCOUNT_ID=${ACCOUNT_ID}" | tee -a ~/.bash_profile
- echo "export AWS_REGION=${AWS_REGION}" | tee -a ~/.bash_profile
- echo "export AZS=(${AZS[@]})" | tee -a ~/.bash_profile
- aws configure get default.region
+ test -n "$AWS_REGION" && echo AWS_REGION is "$AWS_REGION" || echo AWS_REGION is not set
+ #echo "export ACCOUNT_ID=${ACCOUNT_ID}" | tee -a ~/.bash_profile
+ #echo "export AWS_REGION=${AWS_REGION}" | tee -a ~/.bash_profile
+ #echo "export AZS=(${AZS[@]})" | tee -a ~/.bash_profile
+ #aws configure get default.region
 
  aws cloud9 update-environment  --environment-id $C9_PID --managed-credentials-action DISABLE
  rm -vf ${HOME}/.aws/credentials

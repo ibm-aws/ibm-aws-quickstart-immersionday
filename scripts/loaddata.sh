@@ -250,16 +250,21 @@ EOF
 function cloud9_disable_temp_credential() {
  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
  unzip awscliv2.zip
- sudo ./aws/install
+ sudo ./aws/install --update
  sudo cp /usr/local/bin/aws /usr/bin/
  aws --version
 
+ test -n "$AWS_REGION" && echo AWS_REGION is "$AWS_REGION" || echo AWS_REGION is not set
+ export AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
+ export ACCOUNT_ID=$(aws sts get-caller-identity --output text --query Account)
+ aws configure set default.region $AWS_REGION
+ echo "export ACCOUNT_ID=${ACCOUNT_ID}" | tee -a ~/.bash_profile
+ echo "export AWS_REGION=${AWS_REGION}" | tee -a ~/.bash_profile
+ echo "export AZS=(${AZS[@]})" | tee -a ~/.bash_profile
+ aws configure get default.region
+
  aws cloud9 update-environment  --environment-id $C9_PID --managed-credentials-action DISABLE
  rm -vf ${HOME}/.aws/credentials
- 
- test -n "$AWS_REGION" && echo AWS_REGION is "$AWS_REGION" || echo AWS_REGION is not set
- export REGION=`curl http://169.254.169.254/latest/dynamic/instance-identity/document|grep region|awk -F\" '{print $4}'`
- aws configure set default.region $REGION
 
  export ACCESSKEYID=$(aws secretsmanager get-secret-value --secret-id AdminUserCredentialSecret | jq -r ".SecretString" | jq -r ".admin_user_secret_access_key")
  export SECRETKEYID=$(aws secretsmanager get-secret-value --secret-id AdminUserCredentialSecret | jq -r ".SecretString" | jq -r ".admin_user_access_key_id")

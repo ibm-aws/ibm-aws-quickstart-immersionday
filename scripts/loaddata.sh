@@ -244,18 +244,19 @@ EOF
 }
 
 #===============================================
-# Creating SageMaker role
+# Cloud9 prerequisite
 #===============================================
 
-function create_sagemaker_role() {
+function cloud9_disable_temp_credential() {
  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
  unzip awscliv2.zip
  sudo ./aws/install
  sudo cp /usr/local/bin/aws /usr/bin/
  aws --version
+
  aws cloud9 update-environment  --environment-id $C9_PID --managed-credentials-action DISABLE
- 
  rm -vf ${HOME}/.aws/credentials
+ 
  test -n "$AWS_REGION" && echo AWS_REGION is "$AWS_REGION" || echo AWS_REGION is not set
  export REGION=`curl http://169.254.169.254/latest/dynamic/instance-identity/document|grep region|awk -F\" '{print $4}'`
  aws configure set default.region $REGION
@@ -264,6 +265,14 @@ function create_sagemaker_role() {
  export SECRETKEYID=$(aws secretsmanager get-secret-value --secret-id AdminUserCredentialSecret | jq -r ".SecretString" | jq -r ".admin_user_access_key_id")
  aws configure set aws_access_key_id $ACCESSKEYID;
  aws configure set aws_secret_access_key $SECRETKEYID;
+ 
+}
+
+#===============================================
+# Creating SageMaker role
+#===============================================
+
+function create_sagemaker_role() {
  
  export ROLENAME="SagemakerFullAccessRole"
  echo ""
@@ -377,6 +386,7 @@ function print_values() {
 
 }
 
+cloud9_disable_temp_credential
 create_sagemaker_role
 load_data_redshit
 load_data_rds

@@ -335,8 +335,8 @@ Resources:
         Ref: C9InstanceType
       Name:
         Ref: AWS::StackName
-#      OwnerArn: !If [Create3rdPartyResources, !Ref C9OwnerArn, !Ref "AWS::NoValue" ]
-      OwnerArn: !Sub arn:aws:sts::${AWS::AccountId}:assumed-role/TeamRole/MasterKey
+      OwnerArn: !If [Create3rdPartyResources, !Ref C9OwnerArn, !Sub 'arn:aws:sts::${AWS::AccountId}:assumed-role/TeamRole/MasterKey' ]
+#      OwnerArn: !Sub arn:aws:sts::${AWS::AccountId}:assumed-role/TeamRole/MasterKey
       SubnetId: !Ref PublicSubnetID
       Tags:
         -

@@ -7,8 +7,8 @@ function create_users() {
   export route=$(oc get route -n zen |awk 'NR==2 {printf $2}')
   # retrieve password
   oc extract secret/admin-user-details --keys=initial_admin_password --to=- -n zen > /tmp/out.txt
-  #export password=$(</tmp/out.txt)
-  export password=ocsadmin
+  export password=$(</tmp/out.txt)
+  #export password=ocsadmin
   #export password=$(oc get secrets/admin-user-details --template={{.data.initial_admin_password}} -n zen | base64 -d)
 
   # retrieve the message code

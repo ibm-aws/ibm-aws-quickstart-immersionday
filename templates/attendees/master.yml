@@ -386,3 +386,10 @@ Resources:
           NodeType: !Ref NodeType
           RedshiftNodeCount: !Ref RedshiftNodeCount
           BootNodeAccessCIDR: !Ref BastionNodeAccessCIDR
+
+    ApiLambdaStack:
+      Type: AWS::CloudFormation::Stack
+      Properties:
+        TemplateURL: !Join
+                - ''
+                - - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/apilambda.yml

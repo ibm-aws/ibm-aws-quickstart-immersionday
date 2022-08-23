@@ -1,0 +1,166 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Immersion day API gateway and lambda template.
+Resources:
+  InvokeWmlEndpointLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: !Join
+            - '-'
+            - - InvokeWmlEndpointLambdaPolicy
+              - !Select [2, !Split ['/', !Ref AWS::StackId]]
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
+  InvokeWmlEndpointLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: ibm-aws-immersion-day
+        S3Key: !Join
+          - /
+          - - publicdata
+            - lambda
+            - wmllambda.zip
+      Description: 'Invoking WML model endpoint deployed on OpenShift'
+      Environment:
+        Variables:
+          CPD_PASSWORD: 'RCVD_FROM_INSTRUCTOR'
+          CPD_USERNAME: 'RCVD_FROM_INSTRUCTOR'
+          CPD_WML_MODEL_ENDPOINT: 'RCVD_FROM_INSTRUCTOR'
+      FunctionName: !Join
+            - '-'
+            - - InvokeWmlEndpointLambda
+              - !Select [2, !Split ['/', !Ref AWS::StackId]]
+      Handler: app.lambdaHandler
+      MemorySize: 128
+      Role: !GetAtt 'InvokeWmlEndpointLambdaRole.Arn'
+      Runtime: 'nodejs16.x'
+      Timeout: 30
+  InvokeWmlEndpointLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      FunctionName: !GetAtt 'InvokeWmlEndpointLambda.Arn'
+      SourceArn: !Join
+        - ''
+        - - 'arn:aws:execute-api:'
+          - !Ref 'AWS::Region'
+          - ':'
+          - !Ref 'AWS::AccountId'
+          - :*
+  ApiInvokeWmlEndpoint:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Join
+            - '-'
+            - - InvokeWmlEndpointApi
+              - !Select [2, !Split ['/', !Ref AWS::StackId]]
+      Description: 'Invoking WML model endpoint deployed on OpenShift by triggering AWS lambda'
+      FailOnWarnings: true
+      Body:
+        swagger: '2.0'
+        info:
+          version: '2017-07-26T08:52:32Z'
+          title: InvokeWmlEndpoint
+        basePath: /poc
+        schemes:
+          - https
+        paths:
+          /predictions:
+            post:
+              produces:
+                - application/json
+              responses:
+                '200':
+                  description: 200 response
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: '200'
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'POST'"
+                      method.response.header.Access-Control-Allow-Headers: "'content-type'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                    responseTemplates:
+                      application/json: "{}\n"
+                uri: !Join
+                  - ''
+                  - - 'arn:aws:apigateway:'
+                    - !Ref 'AWS::Region'
+                    - :lambda:path/2015-03-31/functions/
+                    - !GetAtt 'InvokeWmlEndpointLambda.Arn'
+                    - /invocations
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                contentHandling: CONVERT_TO_TEXT
+                type: aws_proxy
+            options:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                '200':
+                  description: 200 response
+#                  schema:
+#                    $ref: '#/definitions/Empty'
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: '200'
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: '''POST,OPTIONS'''
+                      method.response.header.Access-Control-Allow-Headers: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'''
+                      method.response.header.Access-Control-Allow-Origin: '''*'''
+                passthroughBehavior: when_no_match
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                type: mock
+  ApiInvokeWmlEndpointDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: ApiInvokeWmlEndpoint
+    Properties:
+      RestApiId: !Ref 'ApiInvokeWmlEndpoint'
+      StageName: CloudFormation
+Outputs:
+  ApiInvokeWmlEndpointUrl:
+    Description: 'Api invoke WML Endpoint Url'
+    Value: !Join
+      - ''
+      - - https://
+        - !Ref 'ApiInvokeWmlEndpoint'
+        - .execute-api.
+        - !Ref 'AWS::Region'
+        - .amazonaws.com
+        - '/CloudFormation/predictions'

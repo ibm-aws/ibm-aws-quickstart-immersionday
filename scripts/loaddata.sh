@@ -252,6 +252,7 @@ function cloud9_disable_temp_credential() {
  unzip awscliv2.zip
  sudo ./aws/install --update
  sudo cp /usr/local/bin/aws /usr/bin/
+ source ~/.bashrc
  aws --version
 
  export AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')

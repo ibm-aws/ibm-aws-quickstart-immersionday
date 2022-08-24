@@ -404,7 +404,9 @@ else
         cmd="ALL"
 fi
 
-
+# START : need to be removed to run on event engine 
+cmd="CREATE"
+# END : need to be removed to run on event engine 
 
 if [[ "$cmd" == "ALL" || "$cmd" == "CREATE" ]]; then
         cloud9_disable_temp_credential

@@ -391,9 +391,28 @@ function print_values() {
 
 }
 
-cloud9_disable_temp_credential
-create_sagemaker_role
-load_data_redshit
-load_data_rds
-load_data_s3
+cmd="ALL"
+
+if [ -z $1 ]; then
+        cmd="ALL"
+elif [[ "$1" == "CREATE" || "$1" == "create" ]]; then
+        cmd="CREATE"
+elif [[ "$1" == "LOAD" || "$1" == "load" ]]; then
+        cmd="LOAD"
+else
+        cmd="ALL"
+fi
+
+
+
+if [[ "$cmd" == "ALL" || "$cmd" == "CREATE" ]]; then
+        cloud9_disable_temp_credential
+        create_sagemaker_role
+fi
+
+if [[ "$cmd" == "ALL" || "$cmd" == "LOAD" ]]; then
+        load_data_redshit
+        load_data_rds
+        load_data_s3
+fi
 print_values

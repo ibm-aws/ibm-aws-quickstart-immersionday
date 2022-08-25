@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Immersion day API gateway and lambda template.
+Description: Immersion day API gateway and lambda template for prediction api.
 Resources:
-  InvokeWmlEndpointLambdaRole:
+  PredictionApiLambdaRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -16,7 +16,7 @@ Resources:
       Policies:
         - PolicyName: !Join
             - '-'
-            - - InvokeWmlEndpointLambdaPolicy
+            - - PredictionApiLambdaPolicy
               - !Select [2, !Split ['/', !Ref AWS::StackId]]
           PolicyDocument:
             Version: '2012-10-17'
@@ -27,7 +27,7 @@ Resources:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource: '*'
-  InvokeWmlEndpointLambda:
+  PredictionApiLambda:
     Type: AWS::Lambda::Function
     Properties:
       Code:
@@ -36,7 +36,7 @@ Resources:
           - /
           - - publicdata
             - lambda
-            - wmllambda.zip
+            - predictionapilambda.zip
       Description: 'Invoking WML model endpoint deployed on OpenShift'
       Environment:
         Variables:
@@ -45,19 +45,19 @@ Resources:
           CPD_WML_MODEL_ENDPOINT: 'RCVD_FROM_INSTRUCTOR'
       FunctionName: !Join
             - '-'
-            - - InvokeWmlEndpointLambda
+            - - PredictionApiLambda
               - !Select [2, !Split ['/', !Ref AWS::StackId]]
       Handler: app.lambdaHandler
       MemorySize: 128
-      Role: !GetAtt 'InvokeWmlEndpointLambdaRole.Arn'
+      Role: !GetAtt 'PredictionApiLambdaRole.Arn'
       Runtime: 'nodejs16.x'
       Timeout: 30
-  InvokeWmlEndpointLambdaPermission:
+  PredictionApiLambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
-      FunctionName: !GetAtt 'InvokeWmlEndpointLambda.Arn'
+      FunctionName: !GetAtt 'PredictionApiLambda.Arn'
       SourceArn: !Join
         - ''
         - - 'arn:aws:execute-api:'
@@ -65,12 +65,12 @@ Resources:
           - ':'
           - !Ref 'AWS::AccountId'
           - :*
-  ApiInvokeWmlEndpoint:
+  PredictionApiEndpoint:
     Type: AWS::ApiGateway::RestApi
     Properties:
       Name: !Join
             - '-'
-            - - InvokeWmlEndpointApi
+            - - PredictionApiEndpoint
               - !Select [2, !Split ['/', !Ref AWS::StackId]]
       Description: 'Invoking WML model endpoint deployed on OpenShift by triggering AWS lambda'
       FailOnWarnings: true
@@ -78,7 +78,7 @@ Resources:
         swagger: '2.0'
         info:
           version: '2017-07-26T08:52:32Z'
-          title: InvokeWmlEndpoint
+          title: PredictionApiEndpoint
         basePath: /poc
         schemes:
           - https
@@ -112,7 +112,7 @@ Resources:
                   - - 'arn:aws:apigateway:'
                     - !Ref 'AWS::Region'
                     - :lambda:path/2015-03-31/functions/
-                    - !GetAtt 'InvokeWmlEndpointLambda.Arn'
+                    - !GetAtt 'PredictionApiLambda.Arn'
                     - /invocations
                 passthroughBehavior: when_no_match
                 httpMethod: POST
@@ -147,19 +147,27 @@ Resources:
                 requestTemplates:
                   application/json: '{"statusCode": 200}'
                 type: mock
-  ApiInvokeWmlEndpointDeployment:
+  PredictionApiEndpointDeployment:
     Type: AWS::ApiGateway::Deployment
-    DependsOn: ApiInvokeWmlEndpoint
+    DependsOn: PredictionApiEndpoint
     Properties:
-      RestApiId: !Ref 'ApiInvokeWmlEndpoint'
+      RestApiId: !Ref 'PredictionApiEndpoint'
       StageName: CloudFormation
+  PredictionApiSecret:
+    Type: "AWS::SecretsManager::Secret"
+    Properties:
+      Name: "PredictionApiSecret"
+      SecretString: !Sub 
+        - '{"PredictionApiUrl":"${PredictionApiUrl}"}'
+        - {PredictionApiUrl: !Join ['',['https://',!Ref 'PredictionApiEndpoint','.execute-api.',!Ref 'AWS::Region','.amazonaws.com','/CloudFormation/predictions']]}
+
 Outputs:
-  ApiInvokeWmlEndpointUrl:
+  PredictionApiUrl:
     Description: 'Api invoke WML Endpoint Url'
     Value: !Join
       - ''
       - - https://
-        - !Ref 'ApiInvokeWmlEndpoint'
+        - !Ref 'PredictionApiEndpoint'
         - .execute-api.
         - !Ref 'AWS::Region'
         - .amazonaws.com

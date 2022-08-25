@@ -55,6 +55,10 @@ function print_values() {
   echo SageMaker_Secret_Key=$SAGEMAKERSECRETACCESSKEY
   echo SageMaker_Access_key=$SAGEMAKERACCESSKEY
   echo
+  echo "********************** Prediction API Information **********************"
+  export PREDICTIONAPIURL=$(aws secretsmanager get-secret-value --secret-id PredictionApiSecret | jq -r ".SecretString" | jq -r ".PredictionApiUrl")
+  echo PredictionApiUrl=$PREDICTIONAPIURL
+  echo
   echo "*************************** End ****************************"
 }
 

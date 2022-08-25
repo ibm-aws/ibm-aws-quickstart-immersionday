@@ -281,7 +281,7 @@ Resources:
             - sudo -H -u ec2-user bash -c "eksctl completion bash >> ~/.bash_completion"
             - sudo -H -u ec2-user bash -c ". /etc/profile.d/bash_completion.sh"
             - sudo -H -u ec2-user bash -c ". ~/.bash_completion"
-            - curl --silent --location "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.8.1/openshift-client-linux-4.8.1.tar.gz" | tar xz -C /tmp
+            - curl --silent --location "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.10.22/openshift-client-linux-4.10.22.tar.gz" | tar xz -C /tmp
             - mv /tmp/oc /usr/bin/
             - sudo -H -u ec2-user bash -c "oc completion bash >> ~/.bash_completion"
             - sudo -H -u ec2-user bash -c ". /etc/profile.d/bash_completion.sh"

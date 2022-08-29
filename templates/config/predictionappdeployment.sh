@@ -7,10 +7,10 @@ fi
 
 export CLUSTERNAME=$1
 export APPFOLDERNAME=./"predictionapp"
-export APPNAMESPACE="immersiondaytest"
+export APPNAMESPACE="immersionday"
 export LBPATTERN="risk-index"
 export R53PARENTDOMAIN="ibmworkshops.com"
-export R53RECORDNAME="test2-prediction-app.ibmworkshops.com"
+export R53RECORDNAME="risk-index-prediction-app.ibmworkshops.com"
 export R53TTL=300
 export R53REQUESTFILENAME="r53request.json"
 export R53APIPUBLICURL="https://e1s28hehsd.execute-api.us-east-2.amazonaws.com/dev/route53/records/cname/add"
@@ -41,13 +41,13 @@ export LBURL=$(kubectl get svc -n $APPNAMESPACE | grep $LBPATTERN | awk '{print 
 echo $LBURL
 
 ## prepare request json file
-export R53_REQUESTJSON=$(jq -n \
-                  --arg parentdomain "$R53PARENTDOMAIN" \
-                  --arg ttl "$R53TTL" \
-                  --arg recordName "$R53RECORDNAME" \
-                  --arg value "$LBURL" \
-                   '$ARGS.named')
-
+#export R53_REQUESTJSON=$(jq -n \
+#                  --arg parentdomain "$R53PARENTDOMAIN" \
+#                  --arg ttl "$R53TTL" \
+#                  --arg recordName "$R53RECORDNAME" \
+#                  --arg value "$LBURL" \
+#                   '$ARGS.named')
+export R53_REQUESTJSON='{"parentdomain":"'$R53PARENTDOMAIN'","ttl":"'$R53TTL'","recordName":"'$R53RECORDNAME'","value":"'$LBURL'"}'
 echo $R53_REQUESTJSON
 rm -f ./$R53REQUESTFILENAME
 echo "$R53_REQUESTJSON" > $R53REQUESTFILENAME

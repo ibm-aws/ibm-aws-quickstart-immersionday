@@ -37,7 +37,7 @@ Resources:
           - - publicdata
             - lambda
             - predictionapilambda.zip
-      Description: 'Invoking WML model endpoint deployed on OpenShift'
+      Description: 'Invoking WML model endpoint deployed on CP4D'
       Environment:
         Variables:
           CPD_PASSWORD: 'RCVD_FROM_INSTRUCTOR'

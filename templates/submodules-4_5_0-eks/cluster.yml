@@ -903,7 +903,7 @@ Resources:
             export TF_LOG_PATH=/home/ec2-user/cp4d-deployment/selfmanaged-openshift/aws/.trace.log
             terraform init -input=false
             terraform plan -out=tfplan -input=false
-            #terraform apply -input=false tfplan
+            terraform apply -input=false tfplan
 
             ecode=$?
             # *** START: commented out only for immersionday ***

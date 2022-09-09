@@ -460,11 +460,12 @@ Parameters:
        The IBM Cloud Pak for Data API key to access IBM Container Registry.
     Type: String 
     NoEcho: 'true'
-    Default: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJJQk0gTWFya2V0cGxhY2UiLCJpYXQiOjE2NTg5MTU1MDIsImp0aSI6IjNhM2E0MjhlNTllZDRjZDQ5MmM4NjJkY2IwNTZmYzc0In0.EYd4N4pUrtqDyW3-cy5s_6gESMCkllCRP5bYNGxJEKM"
+    Default: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJJQk0gTWFya2V0cGxhY2UiLCJpYXQiOjE2NTkwMzg3NjksImp0aSI6IjM5ODA5MGMwNmFjZjRiMTc5YjNhYmYyNDkxYTI0M2U5In0.mqaYcxoRBEWK5m4Q6uHOSAUJJ45_kJXSidsZVuVIf2w"
   RedhatPullSecret:
     Description: S3 path of OpenShift Installer Provisioned Infrastructure pull secret(e.g., s3://my-bucket/path/to/pull-secret).
     Type: String
-    Default: "s3://cp4d-ocp-cloudformation-dev/pull-secrets/pull_secret.json"
+#    Default: "s3://cp4d-ocp-cloudformation-dev/pull-secrets/pull_secret.json"
+    Default: "s3://ibm-aws-immersion-day/pull-secrets/new-redhat-ocp-pull-secret.json"
   OCSInstanceType:
     Default: m4.4xlarge
     AllowedValues:
@@ -1288,8 +1289,10 @@ Resources:
         ProvisionBastionHost: Enabled
         ALBIngressController: Enabled
         EKSClusterName: !Ref AWS::StackName
-        PerAccountSharedResources: 'No'
-        PerRegionSharedResources: 'No'
+#        PerAccountSharedResources: 'No'
+#        PerRegionSharedResources: 'No'
+        PerAccountSharedResources: 'AutoDetect'
+        PerRegionSharedResources: 'AutoDetect'
 
 Outputs:
   BootnodePublicIp:

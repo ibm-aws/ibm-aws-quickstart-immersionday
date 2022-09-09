@@ -817,6 +817,8 @@ Resources:
             cp ./db.yaml   /home/ec2-user/cp4d-deployment/selfmanaged-openshift/aws/db.yaml
             wget https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/domaindelegation.sh
             cp ./domaindelegation.sh    /home/ec2-user/cp4d-deployment/selfmanaged-openshift/aws/domaindelegation.sh
+            wget https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/manta-mirror-config.yaml
+            cp ./manta-mirror-config.yaml   /home/ec2-user/cp4d-deployment/selfmanaged-openshift/aws/manta-mirror-config.yaml
 
             chmod +x /home/ec2-user/cp4d-deployment/selfmanaged-openshift/aws/create-db2-instance.sh
             chmod +x /home/ec2-user/cp4d-deployment/selfmanaged-openshift/aws/cogconfig.sh
@@ -827,105 +829,115 @@ Resources:
             export HOME=~
 
             aws s3 cp ${RedhatPullSecret} ./pull-secret
+
+            echo "openshift_pull_secret_file_path=\"./pull-secret\"" > terraform_vars.tfvars
+
+            echo "region=\"${AWS::Region}\"" >> terraform_vars.tfvars
+            echo "access_key_id=\"${CPDIAMUserAccessKey}\"" >> terraform_vars.tfvars
+            echo "secret_access_key=\"${CPDIAMUserSecret}\"" >> terraform_vars.tfvars
+            echo "new_or_existing_vpc_subnet=\"exist\"" >> terraform_vars.tfvars
+
+            echo "vpc_id=\"${VPCID}\"" >> terraform_vars.tfvars
+            echo "master_subnet1_id=\"${PublicSubnet1ID}\"" >> terraform_vars.tfvars
+            echo "master_subnet2_id=\"${PublicSubnet2ID}\"" >> terraform_vars.tfvars
+            echo "master_subnet3_id=\"${PublicSubnet3ID}\"" >> terraform_vars.tfvars
+            echo "worker_subnet1_id=\"${PrivateSubnet1ID}\"" >> terraform_vars.tfvars
+            echo "worker_subnet2_id=\"${PrivateSubnet2ID}\"" >> terraform_vars.tfvars
+            echo "worker_subnet3_id=\"${PrivateSubnet3ID}\"" >> terraform_vars.tfvars
+            echo "availability_zone1=\"${AvailabilityZone1}\"" >> terraform_vars.tfvars
+            echo "availability_zone2=\"${AvailabilityZone2}\"" >> terraform_vars.tfvars
+            echo "availability_zone3=\"${AvailabilityZone3}\"" >> terraform_vars.tfvars
             
-            export TF_VAR_region=${AWS::Region}
-            export TF_VAR_key_name=??
-            export TF_VAR_access_key_id=${CPDIAMUserAccessKey}
-            export TF_VAR_secret_access_key=${CPDIAMUserSecret}
-            export TF_VAR_new_or_existing_vpc_subnet="exist"
+            echo "enable_permission_quota_check=false" >> terraform_vars.tfvars
+            echo "cluster_name=\"${ClusterName}\"" >> terraform_vars.tfvars
+            echo "az=\"${AZ}\"" >> terraform_vars.tfvars
 
-            export TF_VAR_vpc_id='${VPCID}'
-            export TF_VAR_master_subnet1_id='${PublicSubnet1ID}'
-            export TF_VAR_master_subnet2_id='${PublicSubnet2ID}'
-            export TF_VAR_master_subnet3_id='${PublicSubnet3ID}'
-            export TF_VAR_worker_subnet1_id='${PrivateSubnet1ID}'
-            export TF_VAR_worker_subnet2_id='${PrivateSubnet2ID}'
-            export TF_VAR_worker_subnet3_id='${PrivateSubnet3ID}'
-            export TF_VAR_availability_zone1='${AvailabilityZone1}'
-            export TF_VAR_availability_zone2='${AvailabilityZone2}'
-            export TF_VAR_availability_zone3='${AvailabilityZone3}'
-            
-            export TF_VAR_enable_permission_quota_check=false
-            export TF_VAR_cluster_name=${ClusterName}
-            export TF_VAR_az=${AZ}
+            echo "worker_instance_type=\"${ComputeInstanceType}\"" >> terraform_vars.tfvars
+            echo "worker_instance_volume_iops=\"${ComputeVolumeIops}\"" >> terraform_vars.tfvars
+            echo "worker_instance_volume_size=\"${ComputeVolumeSize}\"" >> terraform_vars.tfvars
+            echo "worker_instance_volume_type=\"${ComputeVolumeType}\"" >> terraform_vars.tfvars
+            echo "worker_replica_count=\"${NumberOfCompute}\"" >> terraform_vars.tfvars
+            echo "master_instance_type=\"${MasterInstanceType}\"" >> terraform_vars.tfvars
+            echo "master_instance_volume_iops=\"${MasterVolumeIops}\"" >> terraform_vars.tfvars
+            echo "master_instance_volume_size=\"${MasterVolumeSize}\"" >> terraform_vars.tfvars
+            echo "master_instance_volume_type=\"${MasterVolumeType}\"" >> terraform_vars.tfvars
+            echo "master_replica_count=\"${NumberOfMaster}\"" >> terraform_vars.tfvars
+            echo "cluster_network_cidr=\"${ClusterNetworkCIDR}\"" >> terraform_vars.tfvars
+            echo "cluster_network_host_prefix=\"${ClusterNetworkHostPrefix}\"" >> terraform_vars.tfvars
+            echo "service_network_cidr=\"${ServiceNetworkCIDR}\"" >> terraform_vars.tfvars
+            echo "private_cluster=\"${PrivateCluster}\"" >> terraform_vars.tfvars
+            echo "public_ssh_key=\"`cat /home/ec2-user/.ssh/id_rsa.pub`\"" >> terraform_vars.tfvars
+            echo "enable_fips=\"${EnableFips}\"" >> terraform_vars.tfvars
+            echo "base_domain=\"${DomainName}\"" >> terraform_vars.tfvars
 
-            export TF_VAR_worker_instance_type=${ComputeInstanceType}
-            export TF_VAR_worker_instance_volume_iops=${ComputeVolumeIops}
-            export TF_VAR_worker_instance_volume_size=${ComputeVolumeSize}
-            export TF_VAR_worker_instance_volume_type=${ComputeVolumeType}
-            export TF_VAR_worker_replica_count=${NumberOfCompute}
-            export TF_VAR_master_instance_type=${MasterInstanceType}
-            export TF_VAR_master_instance_volume_iops=${MasterVolumeIops}
-            export TF_VAR_master_instance_volume_size=${MasterVolumeSize}
-            export TF_VAR_master_instance_volume_type=${MasterVolumeType}
-            export TF_VAR_master_replica_count=${NumberOfMaster}
-            export TF_VAR_cluster_network_cidr=${ClusterNetworkCIDR}
-            export TF_VAR_cluster_network_host_prefix=${ClusterNetworkHostPrefix}
-            export TF_VAR_service_network_cidr=${ServiceNetworkCIDR}
-            export TF_VAR_private_cluster=${PrivateCluster}
-            export TF_VAR_openshift_pull_secret_file_path='./pull-secret'
-            export TF_VAR_public_ssh_key=`cat /home/ec2-user/.ssh/id_rsa.pub`
-            export TF_VAR_enable_fips=${EnableFips}
-            export TF_VAR_base_domain=${DomainName}
+            echo "openshift_username=\"${OpenshiftUsername}\"" >> terraform_vars.tfvars
+            echo "openshift_password=\"${OpenshiftPassword}\"" >> terraform_vars.tfvars
+            echo "enable_autoscaler=\"${EnableAutoscaler}\"" >> terraform_vars.tfvars
 
-            export TF_VAR_openshift_username='${OpenshiftUsername}'
-            export TF_VAR_openshift_password='${OpenshiftPassword}'
-            export TF_VAR_enable_autoscaler='${EnableAutoscaler}'
+            echo "storage_option=\"ocs\"" >> terraform_vars.tfvars
+            echo "ocs={enable = "${EnableOCS}", ami_id = "\"${AMI_ID}\"", dedicated_node_instance_type = "\"${OCSInstanceType}\""}" >> terraform_vars.tfvars
+            echo "efs={enable = "false"}" >> terraform_vars.tfvars
+            echo "portworx_enterprise={enable = "${EnablePortworxEnterprise}", cluster_id = "\"${PortworxClusterId}\"", enable_encryption = "true"}" >> terraform_vars.tfvars
+            echo "portworx_essentials={enable = "${EnablePortworxEssentials}", cluster_id = "\"${PortworxClusterId}\"", user_id = \""${PortworxUserId}"\", osb_endpoint=\""${PortworxOsbEndpoint}"\"}" >> terraform_vars.tfvars
+            echo "accept_cpd_license=\"${LicenseAgreement}\"" >> terraform_vars.tfvars
+            echo "cpd_external_registry=\"${CPDExternalRegistry}\"" >> terraform_vars.tfvars
+            echo "cpd_external_username=\"${APIUsername}\"" >> terraform_vars.tfvars
+            echo "cpd_api_key=\"${APIKey}\"" >> terraform_vars.tfvars
+            echo "cpd_namespace=\"${Namespace}\"" >> terraform_vars.tfvars
+            echo "openshift_version=\"${OpenshiftVersion}\"" >> terraform_vars.tfvars
+            echo "cpd_platform=\"yes\"" >> terraform_vars.tfvars
+            echo "cpd_version=\"4.5.0\"" >> terraform_vars.tfvars
 
-            export TF_VAR_storage_option='ocs'
-            export TF_VAR_ocs='{enable = "${EnableOCS}", ami_id = "${AMI_ID}", dedicated_node_instance_type = "${OCSInstanceType}"}'
-            export TF_VAR_efs='{enable = "false"}'
-            export TF_VAR_portworx_enterprise='{enable = "${EnablePortworxEnterprise}", cluster_id = "${PortworxClusterId}", enable_encryption = "true"}'
-            export TF_VAR_portworx_essentials='{enable = "${EnablePortworxEssentials}", cluster_id = "${PortworxClusterId}", user_id = "${PortworxUserId}", osb_endpoint = "${PortworxOsbEndpoint}"}'
-            export TF_VAR_accept_cpd_license='${LicenseAgreement}'
-            export TF_VAR_cpd_external_registry='${CPDExternalRegistry}'
-            export TF_VAR_cpd_external_username='${APIUsername}'
-            export TF_VAR_cpd_api_key='${APIKey}'
-            export TF_VAR_cpd_namespace='${Namespace}'
-            export TF_VAR_openshift_version='${OpenshiftVersion}'
-            export TF_VAR_cpd_platform="yes"
-            export TF_VAR_cpd_version="4.5.0"
+            echo "db2_oltp=\"${DB2OLTP}\"" >> terraform_vars.tfvars
+            echo "cognos_dashboard_embedded=\"${CDE}\"" >> terraform_vars.tfvars
+            echo "cognos_analytics=\"${CA}\"" >> terraform_vars.tfvars
+            echo "watson_ai_openscale=\"${OpenScale}\"" >> terraform_vars.tfvars
+            echo "watson_studio=\"${WSL}\"" >> terraform_vars.tfvars
+            echo "watson_machine_learning=\"${WML}\"" >> terraform_vars.tfvars
+            echo "data_virtualization=\"${DV}\"" >> terraform_vars.tfvars
+            echo "datastage=\"${DATASTAGE}\"" >> terraform_vars.tfvars
 
-            export TF_VAR_db2_oltp='${DB2OLTP}'
-            export TF_VAR_watson_knowledge_catalog='${WKC}'
-            export TF_VAR_cognos_dashboard_embedded='${CDE}' 
-            export TF_VAR_cognos_analytics='${CA}' 
-            export TF_VAR_watson_ai_openscale='${OpenScale}'
-            export TF_VAR_watson_studio='${WSL}'
-            export TF_VAR_analytics_engine='${Spark}'
-            export TF_VAR_watson_machine_learning='${WML}'
-            export TF_VAR_data_virtualization='${DV}'
-            export TF_VAR_datastage='${DATASTAGE}'
-            
-            export TF_VAR_vpc_cidr='${VPCCIDR}'
+            echo "vpc_cidr=\"${VPCCIDR}\"" >> terraform_vars.tfvars
 
             export TF_LOG=DEBUG
             export TF_LOG_PATH=/home/ec2-user/cp4d-deployment/selfmanaged-openshift/aws/.trace.log
-            terraform init -input=false
-            terraform plan -out=tfplan -input=false
-            terraform apply -input=false tfplan
 
+            terraform init -input=false
+            terraform plan -out=tfplan -var-file=terraform_vars.tfvars
+            terraform apply -input=false tfplan
+            
             ecode=$?
             # *** START: commented out only for immersionday ***
             #aws s3 cp /home/ec2-user/cp4d-deployment/selfmanaged-openshift/aws/.trace.log s3://${ICPDDeploymentLogsBucketName}/cpd-trace.log || echo 'NOT_FOUND_TRACE_LOG';
             #aws s3 cp /var/log/cloud-init-output.log s3://${ICPDDeploymentLogsBucketName}/cpd-bootstrap.log || echo 'NOT_FOUND_CPD_BOOTSTRAP_LOG';
             #aws s3 cp /home/ec2-user/cp4d-deployment/selfmanaged-openshift/aws/terraform.tfstate s3://${ICPDDeploymentLogsBucketName}/cpd-terraform.tfstate || echo 'NOT_FOUND_TERRAFORM_TFSTATE';
             # *** END: commented out only for immersionday ***
+            
+            # *** START: configure manta repo for WKC ***
+
+            oc apply -f /home/ec2-user/cp4d-deployment/selfmanaged-openshift/aws/manta-mirror-config.yaml
+            if [ "${WKC}" == "yes" ]; then
+              echo "watson_knowledge_catalog=\"${WKC}\"" >> terraform_vars.tfvars
+              terraform plan -out=tfplan -var-file=terraform_vars.tfvars
+              terraform apply -input=false tfplan
+            fi
+
+            # *** END: configure manta repo for WKC ***
 
             # *** START: setup DB2 and Cognos contain store ***
-            
-            if [ "${CA}" == "yes" ]; then
-              /bin/bash /home/ec2-user/cp4d-deployment/selfmanaged-openshift/aws/create-db2-instance.sh
-            fi
+
+            #if [ "${CA}" == "yes" ]; then
+            #  /bin/bash /home/ec2-user/cp4d-deployment/selfmanaged-openshift/aws/create-db2-instance.sh
+            #fi
             
             # *** END: setup DB2 and Cognos contain store ***
             
-            export CP4DPWD=$(oc extract secret/admin-user-details --keys=initial_admin_password --to=- -n ${Namespace})
-            aws secretsmanager create-secret --name "cpdsecret-${ClusterName}" --description "CPD secrets for the cluster ${ClusterName}" --secret-string "{\"user\":\"admin\",\"password\":\"$CP4DPWD\"}" --region="${AWS::Region}" || echo 'UNABLE_TO_CREATE_CPD_SECRET'
+            #export CP4DPWD=$(oc extract secret/admin-user-details --keys=initial_admin_password --to=- -n ${Namespace})
+            #aws secretsmanager create-secret --name "cpdsecret-${ClusterName}" --description "CPD secrets for the cluster ${ClusterName}" --secret-string "{\"user\":\"admin\",\"password\":\"$CP4DPWD\"}" --region="${AWS::Region}" || echo 'UNABLE_TO_CREATE_CPD_SECRET'
 
-            cp -rf ~/.kube/ /home/ec2-user/ || echo 'NOT_FOUND_DOT_KUBE';
-            chown -R ec2-user:ec2-user /home/ec2-user/.kube || echo 'NOT_FOUND_DOT_KUBE';
-            oc exec -it $(oc get pod -l component=usermgmt | tail -1 | cut -f1 -d\ ) -- bash -c "printf \"${OpenshiftPassword}\n\" | /usr/src/server-src/scripts/manage-user.sh --enable-user admin" || echo 'NOT_LOGIN_VIA_OC_DURING_EXEC';
+            #cp -rf ~/.kube/ /home/ec2-user/ || echo 'NOT_FOUND_DOT_KUBE';
+            #chown -R ec2-user:ec2-user /home/ec2-user/.kube || echo 'NOT_FOUND_DOT_KUBE';
+            #oc exec -it $(oc get pod -l component=usermgmt | tail -1 | cut -f1 -d\ ) -- bash -c "printf \"${OpenshiftPassword}\n\" | /usr/src/server-src/scripts/manage-user.sh --enable-user admin" || echo 'NOT_LOGIN_VIA_OC_DURING_EXEC';
             /usr/local/bin/cfn-signal --exit-code $ecode --id $AWS_STACKID  --data "See logs at ${ICPDDeploymentLogsBucketName}/cpd-bootstrap.log" $ICPDInstallationCompletedURL || /usr/bin/cfn-signal --exit-code $ecode --id $AWS_STACKID  --data "See logs at ${ICPDDeploymentLogsBucketName}/cpd-bootstrap.log" $ICPDInstallationCompletedURL
           -
             AMI_ID: !FindInMap [AWSAMIRegionMap, !Ref "AWS::Region", COREOSAmiId]

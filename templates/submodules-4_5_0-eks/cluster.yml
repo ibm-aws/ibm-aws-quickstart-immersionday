@@ -511,10 +511,6 @@ Conditions:
 #  EnablePortworxIBM: !Equals [!Ref StorageType, 'PortworxIBM']
 
 Resources:
-
-# ### start: prerequisite immersion day ###
-
-# ### end: prerequisite immersion day ###
   CPDIAMUser:
     Type: 'AWS::IAM::User'
     Properties:
@@ -926,18 +922,18 @@ Resources:
 
             # *** START: setup DB2 and Cognos contain store ***
 
-            #if [ "${CA}" == "yes" ]; then
-            #  /bin/bash /home/ec2-user/cp4d-deployment/selfmanaged-openshift/aws/create-db2-instance.sh
-            #fi
+            if [ "${CA}" == "yes" ]; then
+              /bin/bash /home/ec2-user/cp4d-deployment/selfmanaged-openshift/aws/create-db2-instance.sh
+            fi
             
             # *** END: setup DB2 and Cognos contain store ***
             
-            #export CP4DPWD=$(oc extract secret/admin-user-details --keys=initial_admin_password --to=- -n ${Namespace})
-            #aws secretsmanager create-secret --name "cpdsecret-${ClusterName}" --description "CPD secrets for the cluster ${ClusterName}" --secret-string "{\"user\":\"admin\",\"password\":\"$CP4DPWD\"}" --region="${AWS::Region}" || echo 'UNABLE_TO_CREATE_CPD_SECRET'
+            export CP4DPWD=$(oc extract secret/admin-user-details --keys=initial_admin_password --to=- -n ${Namespace})
+            aws secretsmanager create-secret --name "cpdsecret-${ClusterName}" --description "CPD secrets for the cluster ${ClusterName}" --secret-string "{\"user\":\"admin\",\"password\":\"$CP4DPWD\"}" --region="${AWS::Region}" || echo 'UNABLE_TO_CREATE_CPD_SECRET'
 
-            #cp -rf ~/.kube/ /home/ec2-user/ || echo 'NOT_FOUND_DOT_KUBE';
-            #chown -R ec2-user:ec2-user /home/ec2-user/.kube || echo 'NOT_FOUND_DOT_KUBE';
-            #oc exec -it $(oc get pod -l component=usermgmt | tail -1 | cut -f1 -d\ ) -- bash -c "printf \"${OpenshiftPassword}\n\" | /usr/src/server-src/scripts/manage-user.sh --enable-user admin" || echo 'NOT_LOGIN_VIA_OC_DURING_EXEC';
+            cp -rf ~/.kube/ /home/ec2-user/ || echo 'NOT_FOUND_DOT_KUBE';
+            chown -R ec2-user:ec2-user /home/ec2-user/.kube || echo 'NOT_FOUND_DOT_KUBE';
+            oc exec -it $(oc get pod -l component=usermgmt | tail -1 | cut -f1 -d\ ) -- bash -c "printf \"${OpenshiftPassword}\n\" | /usr/src/server-src/scripts/manage-user.sh --enable-user admin" || echo 'NOT_LOGIN_VIA_OC_DURING_EXEC';
             /usr/local/bin/cfn-signal --exit-code $ecode --id $AWS_STACKID  --data "See logs at ${ICPDDeploymentLogsBucketName}/cpd-bootstrap.log" $ICPDInstallationCompletedURL || /usr/bin/cfn-signal --exit-code $ecode --id $AWS_STACKID  --data "See logs at ${ICPDDeploymentLogsBucketName}/cpd-bootstrap.log" $ICPDInstallationCompletedURL
           -
             AMI_ID: !FindInMap [AWSAMIRegionMap, !Ref "AWS::Region", COREOSAmiId]

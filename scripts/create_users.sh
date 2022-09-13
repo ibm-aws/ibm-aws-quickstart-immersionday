@@ -8,11 +8,16 @@ function create_users() {
   # retrieve password
   oc extract secret/admin-user-details -n zen --keys=initial_admin_password --to=- -n zen > /tmp/out.txt
   export password=$(</tmp/out.txt)
-  #export password=ocsadmin
   #export password=$(oc get secrets/admin-user-details --template={{.data.initial_admin_password}} -n zen | base64 -d)
 
   # retrieve the message code
   code=$(curl --silent  --output /dev/null --show-error --fail -w "%{http_code}\\n" -k -X POST https://$route/icp4d-api/v1/authorize -H 'cache-control: no-cache'     -H 'content-type: application/json' -d '{"username":"admin","password":"'"$password"'"}')
+  
+  if [ "$code" != "200" ]; then
+        ## sometime CPD login work with openshift password. In case code is not 200, trying with openshift password
+        export password=ocsadmin
+        code=$(curl --silent  --output /dev/null --show-error --fail -w "%{http_code}\\n" -k -X POST https://$route/icp4d-api/v1/authorize -H 'cache-control: no-cache'     -H 'content-type: application/json' -d '{"username":"admin","password":"'"$password"'"}')
+  fi
 
   if [ "$code" = "200" ]; then
     #Retrieve token

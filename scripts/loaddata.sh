@@ -405,7 +405,7 @@ else
 fi
 
 # START : need to be removed to run on event engine
-cmd="CREATE"
+# cmd="CREATE"
 # END : need to be removed to run on event engine
 
 if [[ "$cmd" == "ALL" || "$cmd" == "CREATE" ]]; then

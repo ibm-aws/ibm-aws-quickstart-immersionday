@@ -67,17 +67,17 @@ EOF
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "drop table if exists \"public\".\"vacc\" cascade"
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "drop table if exists \"public\".\"HOSP_refined\" cascade"
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "drop table if exists \"public\".\"account\" cascade"
-  psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "drop table if exists \"public\".\"personnel_integrated_data_table\" cascade"
+  psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "drop table if exists \"public\".\"healthcare_personnel_integrated_data_table\" cascade"
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "drop table if exists \"public\".\"mort\" cascade"
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "drop table if exists \"public\".\"MORT_refined\" cascade"
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "drop table if exists \"public\".\"address\" cascade"
-  psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "drop table if exists \"public\".\"personnel_integrated_data_table_v1\" cascade"
+  psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "drop table if exists \"public\".\"healthcare_personnel_integrated_data_table_v1\" cascade"
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "drop table if exists \"public\".\"mylan_specialty_personnel_data_table\" cascade"
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "drop table if exists \"public\".\"ts-data-region\" cascade"
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "drop table if exists \"public\".\"ts_Brussels\" cascade"
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "drop table if exists \"public\".\"Merged_HOSP_CAS\" cascade"
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "drop table if exists \"public\".\"credit_card\" cascade"
-  psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "drop table if exists \"public\".\"personnel_integrated_datatable_v1\" cascade"
+  psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "drop table if exists \"public\".\"healthcare_personnel_integrated_datatable_v1\" cascade"
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "drop table if exists \"public\".\"pii_info\" cascade"
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "drop table if exists \"public\".\"ts-data-region_mod\" cascade"
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "drop table if exists \"public\".\"ts_Brussels_agg\" cascade"
@@ -109,10 +109,10 @@ EOF
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "CREATE TABLE IF NOT EXISTS \"public\".\"credit_card\" (\"id\" bigint NOT NULL, \"created_at\" bigint, \"last_modified\" bigint, \"number\" character varying(2000), \"type\" character varying(20), \"account_id\" bigint ) "
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "CREATE TABLE IF NOT EXISTS \"public\".\"data_country_level\" (\"DATE\" character varying(1024), \"Total_cases\" integer ) "
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "CREATE TABLE IF NOT EXISTS \"public\".\"flanders_cases_prediction_table\" (\"cases\" integer NOT NULL ) "
-  psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "CREATE TABLE IF NOT EXISTS \"public\".\"personnel_integrated_data_table\" (\"id\" integer NOT NULL, \"first_name\" character varying(50), \"last_name\" character varying(50), \"place\" character varying(50), \"email\" character varying(255), \"gender\" character varying(50), \"age\" integer, \"organization\" character varying(255) ) "
-  #psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "CREATE TABLE IF NOT EXISTS \"public\".\"personnel_integrated_data_table\" (\"id\" integer NOT NULL, \"first_name\" character varying(50), \"last_name\" character varying(50), \"place\" character varying(50), \"email\" character varying(255), \"gender\" character varying(50), \"age\" integer, \"organization\" character varying(255) ) "
-  psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "CREATE TABLE IF NOT EXISTS \"public\".\"personnel_integrated_data_table_v1\" (\"id\" integer NOT NULL, \"first_name\" character varying(50), \"last_name\" character varying(50), \"place\" character varying(50), \"email\" character varying(255), \"gender\" character varying(50), \"age\" integer, \"organization\" character varying(255) ) "
-  psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "CREATE TABLE IF NOT EXISTS \"public\".\"personnel_integrated_datatable_v1\" (\"id\" integer, \"first_name\" character varying(50), \"last_name\" character varying(50), \"place\" character varying(50), \"email\" character varying(255), \"gender\" character varying(50), \"age\" integer, \"organization\" character varying(255) ) "
+  psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "CREATE TABLE IF NOT EXISTS \"public\".\"healthcare_personnel_integrated_data_table\" (\"id\" integer NOT NULL, \"first_name\" character varying(50), \"last_name\" character varying(50), \"place\" character varying(50), \"email\" character varying(255), \"gender\" character varying(50), \"age\" integer, \"organization\" character varying(255) ) "
+  #psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "CREATE TABLE IF NOT EXISTS \"public\".\"healthcare_personnel_integrated_data_table\" (\"id\" integer NOT NULL, \"first_name\" character varying(50), \"last_name\" character varying(50), \"place\" character varying(50), \"email\" character varying(255), \"gender\" character varying(50), \"age\" integer, \"organization\" character varying(255) ) "
+  psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "CREATE TABLE IF NOT EXISTS \"public\".\"healthcare_personnel_integrated_data_table_v1\" (\"id\" integer NOT NULL, \"first_name\" character varying(50), \"last_name\" character varying(50), \"place\" character varying(50), \"email\" character varying(255), \"gender\" character varying(50), \"age\" integer, \"organization\" character varying(255) ) "
+  psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "CREATE TABLE IF NOT EXISTS \"public\".\"healthcare_personnel_integrated_datatable_v1\" (\"id\" integer, \"first_name\" character varying(50), \"last_name\" character varying(50), \"place\" character varying(50), \"email\" character varying(255), \"gender\" character varying(50), \"age\" integer, \"organization\" character varying(255) ) "
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "CREATE TABLE IF NOT EXISTS \"public\".\"merged_pii_data_source\" (\"id\" integer NOT NULL, \"first_name\" character varying(1024), \"last_name\" character varying(1024), \"email\" character varying(1024), \"gender\" character varying(1024), \"age\" integer, \"organization\" character varying(1024) ) "
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "CREATE TABLE IF NOT EXISTS \"public\".\"merged_pii_info_table\" (\"id\" character varying(1024), \"first_name\" character varying(1024), \"last_name\" character varying(1024), \"email\" character varying(1024), \"gender\" character varying(1024), \"age\" integer, \"Organization\" character varying(1024) ) "
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "CREATE TABLE IF NOT EXISTS \"public\".\"mort\" (\"DATE\" text, \"REGION\" text, \"AGEGROUP\" text, \"SEX\" text, \"DEATHS\" text ) "
@@ -169,9 +169,9 @@ EOF
   wget -q $GITHUBURL/raw/main/rds/csv/credit_card.csv -O ./csv/credit_card.csv
   wget -q $GITHUBURL/raw/main/rds/csv/data_country_level.csv -O ./csv/data_country_level.csv
   wget -q $GITHUBURL/raw/main/rds/csv/flanders_cases_prediction_table.csv -O ./csv/flanders_cases_prediction_table.csv
-  wget -q $GITHUBURL/raw/main/rds/csv/personnel_integrated_data_table.csv -O ./csv/personnel_integrated_data_table.csv
-  wget -q $GITHUBURL/raw/main/rds/csv/personnel_integrated_data_table_v1.csv -O ./csv/personnel_integrated_data_table_v1.csv
-  wget -q $GITHUBURL/raw/main/rds/csv/personnel_integrated_datatable_v1.csv -O ./csv/personnel_integrated_datatable_v1.csv
+  wget -q $GITHUBURL/raw/main/rds/csv/healthcare_personnel_integrated_data_table.csv -O ./csv/healthcare_personnel_integrated_data_table.csv
+  wget -q $GITHUBURL/raw/main/rds/csv/healthcare_personnel_integrated_data_table_v1.csv -O ./csv/healthcare_personnel_integrated_data_table_v1.csv
+  wget -q $GITHUBURL/raw/main/rds/csv/healthcare_personnel_integrated_datatable_v1.csv -O ./csv/healthcare_personnel_integrated_datatable_v1.csv
   wget -q $GITHUBURL/raw/main/rds/csv/merged_pii_data_source.csv -O ./csv/merged_pii_data_source.csv
   wget -q $GITHUBURL/raw/main/rds/csv/merged_pii_info_table.csv -O ./csv/merged_pii_info_table.csv
   wget -q $GITHUBURL/raw/main/rds/csv/mort.csv -O ./csv/mort.csv
@@ -211,9 +211,9 @@ EOF
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"credit_card\" from './csv/credit_card.csv' delimiter ',' CSV HEADER"
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"data_country_level\" from './csv/data_country_level.csv' delimiter ',' CSV HEADER"
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"flanders_cases_prediction_table\" from './csv/flanders_cases_prediction_table.csv' delimiter ',' CSV HEADER"
-  psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"personnel_integrated_data_table\" from './csv/personnel_integrated_data_table.csv' delimiter ',' CSV HEADER"
-  psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"personnel_integrated_data_table_v1\" from './csv/personnel_integrated_data_table_v1.csv' delimiter ',' CSV HEADER"
-  psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"personnel_integrated_datatable_v1\" from './csv/personnel_integrated_datatable_v1.csv' delimiter ',' CSV HEADER"
+  psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"healthcare_personnel_integrated_data_table\" from './csv/healthcare_personnel_integrated_data_table.csv' delimiter ',' CSV HEADER"
+  psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"healthcare_personnel_integrated_data_table_v1\" from './csv/healthcare_personnel_integrated_data_table_v1.csv' delimiter ',' CSV HEADER"
+  psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"healthcare_personnel_integrated_datatable_v1\" from './csv/healthcare_personnel_integrated_datatable_v1.csv' delimiter ',' CSV HEADER"
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"merged_pii_data_source\" from './csv/merged_pii_data_source.csv' delimiter ',' CSV HEADER"
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"merged_pii_info_table\" from './csv/merged_pii_info_table.csv' delimiter ',' CSV HEADER"
   psql -h $PGENDPOINT -d $PGDBNAME -U $PGUSERNAME -c "\COPY public.\"mort\" from './csv/mort.csv' delimiter ',' CSV HEADER"

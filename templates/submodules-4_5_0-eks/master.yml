@@ -417,7 +417,7 @@ Parameters:
     AllowedValues:
       - "no"
       - "yes"
-    Default: "yes"
+    Default: "no"
   CDE:
     Description: >-
        Choose yes to install the Cognos Dashboard Engine service.
@@ -497,11 +497,13 @@ Parameters:
     Description: Select either EFS, Portworx or Openshift Container Storage as default Storage class.  
     Type: String
     AllowedValues:
-      - "OCS"
-      - "PortworxEnterprise"
-      - "PortworxEssentials"
+      - "efs-ebs"
+#      - "efs"
+      - "ocs"
+      - "portworxenterprise"
+      - "portworxessentials"
 #      - "PortworxIBM"
-    Default: "OCS"
+    Default: "efs-ebs"
   PortworxClusterId:
     Description: Portworx storage cluster id.
     Type: String

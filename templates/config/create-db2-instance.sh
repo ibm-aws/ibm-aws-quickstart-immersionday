@@ -99,7 +99,7 @@ function create_instance() {
   oc project zen
   export imagesecret=`oc get secret | grep db2u-dockercfg | awk '{ print $1 }'`
   #export imagesecret=`oc get secrets | grep db2u | grep dockercfg | awk '{print $1}'`
-  export sc=$(oc get sc | grep cephfs | awk '{print $1}')
+  export sc=$(oc get sc | grep efs-nfs | awk '{print $1}')
 
   echo $imagesecret
   echo $sc

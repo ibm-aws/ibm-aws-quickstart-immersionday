@@ -130,7 +130,7 @@ Parameters:
     AllowedValues:
       - "no"
       - "yes"
-    Default: "yes"
+    Default: "no"
   CDE:
     Description: >-
        Choose yes to install the Cognos Dashboard Engine service.
@@ -359,11 +359,13 @@ Parameters:
     Description: Openshift Container Storage is currently the only supported storage option.  
     Type: String
     AllowedValues:
-      - "OCS"
-      - "PortworxEnterprise"
-      - "PortworxEssentials"
+      - "efs-ebs"
+#      - "efs"
+      - "ocs"
+      - "portworxenterprise"
+      - "portworxessentials"
 #      - "PortworxIBM"
-    Default: "OCS"
+    Default: "efs-ebs"
   PortworxClusterId: 
     Description: Portworx storage cluster id.
     Type: String
@@ -505,9 +507,11 @@ Rules:
 Conditions:
   3AZCondition: !Equals [!Ref NumberOfAZs, 3]
   AcceptLicense: !Equals [!Ref LicenseAgreement, 'I agree']
-  OCSCondition: !Equals [!Ref StorageType, 'OCS']
-  PortworxEnterpriseCondition: !Equals [!Ref StorageType, 'PortworxEnterprise']
-  PortworxEssentialsCondition: !Equals [!Ref StorageType, 'PortworxEssentials']
+  OCSCondition: !Equals [!Ref StorageType, 'ocs']
+  EfsEbsCondition: !Equals [!Ref StorageType, 'efs-ebs']
+#  EfsCondition: !Equals [!Ref StorageType, 'efs']
+  PortworxEnterpriseCondition: !Equals [!Ref StorageType, 'portworxenterprise']
+  PortworxEssentialsCondition: !Equals [!Ref StorageType, 'portworxessentials']
 #  EnablePortworxIBM: !Equals [!Ref StorageType, 'PortworxIBM']
 
 Resources:
@@ -870,9 +874,9 @@ Resources:
             echo "openshift_password=\"${OpenshiftPassword}\"" >> terraform_vars.tfvars
             echo "enable_autoscaler=\"${EnableAutoscaler}\"" >> terraform_vars.tfvars
 
-            echo "storage_option=\"ocs\"" >> terraform_vars.tfvars
+            echo "storage_option=\"${StorageType}\"" >> terraform_vars.tfvars
             echo "ocs={enable = "${EnableOCS}", ami_id = "\"${AMI_ID}\"", dedicated_node_instance_type = "\"${OCSInstanceType}\""}" >> terraform_vars.tfvars
-            echo "efs={enable = "false"}" >> terraform_vars.tfvars
+            echo "efs={enable = "${EnableEfsEbs}"}" >> terraform_vars.tfvars
             echo "portworx_enterprise={enable = "${EnablePortworxEnterprise}", cluster_id = "\"${PortworxClusterId}\"", enable_encryption = "true"}" >> terraform_vars.tfvars
             echo "portworx_essentials={enable = "${EnablePortworxEssentials}", cluster_id = "\"${PortworxClusterId}\"", user_id = \""${PortworxUserId}"\", osb_endpoint=\""${PortworxOsbEndpoint}"\"}" >> terraform_vars.tfvars
             echo "accept_cpd_license=\"${LicenseAgreement}\"" >> terraform_vars.tfvars
@@ -945,8 +949,9 @@ Resources:
             AvailabilityZone2: !If [ 3AZCondition, !Select [1, !Ref AvailabilityZones], ""]
             AvailabilityZone3: !If [ 3AZCondition, !Select [2, !Ref AvailabilityZones], ""]
             EnableOCS: !If [ OCSCondition, 'true', 'false' ]
+            EnableEfsEbs: !If [ EfsEbsCondition, 'true', 'false' ]
             EnablePortworxEnterprise: !If [ PortworxEnterpriseCondition, 'true', 'false' ]
-            EnablePortworxEssentials: !If [ PortworxEssentialsCondition, 'true', 'false'] 
+            EnablePortworxEssentials: !If [ PortworxEssentialsCondition, 'true', 'false']
   
   CleanUpLambda:
     Type: AWS::Lambda::Function

@@ -13,8 +13,8 @@ function print_values() {
 
   echo S3Bucket=$S3Bucket
   echo S3BucketArn=$S3BucketArn
-  echo Secret_Key=$aws_secret_access_key
-  echo Access_key=$aws_access_key_id
+  echo Access_Key=$aws_secret_access_key
+  echo Secret_key=$aws_access_key_id
   echo
   echo "******************* RedShift Information *******************"
   export REDSHIFT_ENDPOINT=$(aws secretsmanager get-secret-value --secret-id RedshiftImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RedshiftEndpoint")
@@ -52,8 +52,8 @@ function print_values() {
   echo "********************** SageMaker Information **********************"
   export SAGEMAKERSECRETACCESSKEY=$(aws secretsmanager get-secret-value --secret-id AdminUserCredentialSecret | jq -r ".SecretString" | jq -r ".admin_user_secret_access_key")
   export SAGEMAKERACCESSKEY=$(aws secretsmanager get-secret-value --secret-id AdminUserCredentialSecret | jq -r ".SecretString" | jq -r ".admin_user_access_key_id")
-  echo SageMaker_Secret_Key=$SAGEMAKERSECRETACCESSKEY
-  echo SageMaker_Access_key=$SAGEMAKERACCESSKEY
+  echo SageMaker_Access_Key=$SAGEMAKERSECRETACCESSKEY
+  echo SageMaker_Secret_key=$SAGEMAKERACCESSKEY
   echo
   echo "********************** Prediction API Information **********************"
   export PREDICTIONAPIURL=$(aws secretsmanager get-secret-value --secret-id PredictionApiSecret | jq -r ".SecretString" | jq -r ".PredictionApiUrl")

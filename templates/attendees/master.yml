@@ -305,7 +305,7 @@ Resources:
       Properties:
         TemplateURL: !Join
                 - ''
-                - - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/ekscp4d450/vpc.yml
+                - - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/attendees/vpc.yml
         Parameters:
           AvailabilityZones: !Join [ ',', !Ref 'AvailabilityZones']
           NumberOfAZs: !Ref  NumberOfAZs

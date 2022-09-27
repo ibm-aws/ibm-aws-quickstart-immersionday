@@ -37,7 +37,7 @@ fi
 kubectl create namespace $APPNAMESPACE
 kubectl apply -f immersion-day-lab4-app-main/deploy.yaml -n $APPNAMESPACE
 
-sleep 30s
+sleep 30
 
 ## Get LB url
 export LBURL=$(kubectl get svc -n $APPNAMESPACE | grep $LBPATTERN | awk '{print $4}')

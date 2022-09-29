@@ -5,7 +5,7 @@
 #===============================================
 function print_values() {
   echo
-  echo "********************** S3 Information **********************"
+  echo "********************** AWS Information **********************"
   export region=$(aws configure get region)
   echo region=$region
   echo

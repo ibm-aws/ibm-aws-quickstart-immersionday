@@ -6,15 +6,19 @@
 function print_values() {
   echo
   echo "********************** S3 Information **********************"
+  export region=$(aws configure get region)
+  echo region=$region
+  echo
+  echo "********************** S3 Information **********************"
   export S3Bucket=$(aws secretsmanager get-secret-value --secret-id S3ImmerssiondayBucketSecrets | jq -r ".SecretString" | jq -r ".S3Bucket")
   export S3BucketArn=$(aws secretsmanager get-secret-value --secret-id S3ImmerssiondayBucketSecrets | jq -r ".SecretString" | jq -r ".S3BucketArn")
   export aws_secret_access_key=$(aws secretsmanager get-secret-value --secret-id S3ImmerssiondayBucketSecrets | jq -r ".SecretString" | jq -r ".aws_secret_access_key")
   export aws_access_key_id=$(aws secretsmanager get-secret-value --secret-id S3ImmerssiondayBucketSecrets | jq -r ".SecretString" | jq -r ".aws_access_key_id")
-
   echo S3Bucket=$S3Bucket
   echo S3BucketArn=$S3BucketArn
   echo Access_Key=$aws_secret_access_key
   echo Secret_key=$aws_access_key_id
+  echo S3_endpoint="https://s3.$region.amazonaws.com"
   echo
   echo "******************* RedShift Information *******************"
   export REDSHIFT_ENDPOINT=$(aws secretsmanager get-secret-value --secret-id RedshiftImmerssiondaySecrets | jq -r ".SecretString" | jq -r ".RedshiftEndpoint")
@@ -27,7 +31,7 @@ function print_values() {
   echo RedShift_Password=$REDSHIFT_PASSWORD
   echo RedShift_Database_Name=$REDSHIFT_DBNAME
   echo RedShift_Port=$REDSHIFT_PORT
-  echo REDSHIFT_Endpoint=$REDSHIFT_ENDPOINT
+  echo RedShift_Endpoint=$REDSHIFT_ENDPOINT
   echo
   echo "******************* Postgres Information *******************"
   # retrieve rds details from secretmanager

@@ -130,7 +130,7 @@ Parameters:
     AllowedValues:
       - "no"
       - "yes"
-    Default: "no"
+    Default: "yes"
   CDE:
     Description: >-
        Choose yes to install the Cognos Dashboard Engine service.

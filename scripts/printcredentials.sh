@@ -72,7 +72,7 @@ function print_values() {
   echo "********************** DB2 Hostname Information *******************"
   # retrieve DB2 Hostname from CP4D
   export db2_deploy_id=`(oc get db2ucluster | grep 'db2oltp-[0-9]' | awk '{print $1}')`
-  export hostname=`(oc get po -o wide | grep c-$db2_deploy_id-db2u-0 |  awk '{ printf $7 }')`
+  export hostname=`(oc get po -o wide -n zen | grep c-$db2_deploy_id-db2u-0 |  awk '{ printf $7 }')`
 
   echo DB2 Hostname=$hostname
   

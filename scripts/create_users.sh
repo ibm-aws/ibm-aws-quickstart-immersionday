@@ -34,7 +34,7 @@ function create_users() {
 
     echo "providing access to service instances"
     # Call Fat Jar
-    java -jar cpd-api-automation_v3.jar "$route" "admin" "$password" "user$ram" "datascientist$ram"
+    java -jar cpd-api-automation_v4.jar "$route" "admin" "$password" "user$ram" "datascientist$ram"
 
   else
     echo "Error in CP4D Token extraction"

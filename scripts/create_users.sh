@@ -4,9 +4,9 @@
 # Creating Users on CP4D
 #========================
 function create_users() {
-  export route=$(oc get route -n zen |awk 'NR==2 {printf $2}')
+  export route=$(oc get route -n zen-46 |awk 'NR==2 {printf $2}')
   # retrieve password
-  oc extract secret/admin-user-details -n zen --keys=initial_admin_password --to=- -n zen-46 > /tmp/out.txt
+  oc extract secret/admin-user-details -n zen-46 --keys=initial_admin_password --to=- -n zen-46 > /tmp/out.txt
   export password=$(</tmp/out.txt)
   
   # retrieve the message code

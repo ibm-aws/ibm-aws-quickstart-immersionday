@@ -64,9 +64,9 @@ function print_values() {
   echo Postgres_Endpoint=$PGENDPOINT
   echo
   
-  echo "********************** Prediction API Information **********************"
+  echo "********************** Amazon API Gateway Endpoint URL **********************"
   export PREDICTIONAPIURL=$(aws secretsmanager get-secret-value --secret-id PredictionApiSecret | jq -r ".SecretString" | jq -r ".PredictionApiUrl")
-  echo PredictionApiUrl=$PREDICTIONAPIURL
+  echo AmazonAPIGatewayEndpointURL=$PREDICTIONAPIURL
   echo
 
   echo "********************** DB2 Hostname Information *******************"

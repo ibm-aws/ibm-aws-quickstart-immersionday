@@ -750,7 +750,7 @@ Resources:
             sudo yum install podman -y
             podman version
             
-            yum install python36 -y
+            yum install python38 -y
             yum install wget -y
             ### END: install podman ###
 

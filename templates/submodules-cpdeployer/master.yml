@@ -1115,3 +1115,6 @@ Outputs:
   BootnodePublicIp:
     Description: The boot node public IP address.
     Value: !GetAtt 'CloudPakDataStack.Outputs.BootnodePublicIp'
+  EKSBastionPublicIp:
+    Description: The EKS bastion node IP.
+    Value: !GetAtt 'EKSStack.Outputs.BastionIP'    

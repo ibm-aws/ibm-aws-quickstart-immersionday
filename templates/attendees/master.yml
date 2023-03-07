@@ -305,7 +305,7 @@ Resources:
       Properties:
         TemplateURL: !Join
                 - ''
-                - - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/attendees/vpc.yml
+                - - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/attendees/vpc.yml
         Parameters:
           AvailabilityZones: !Join [ ',', !Ref 'AvailabilityZones']
           NumberOfAZs: !Ref  NumberOfAZs
@@ -326,21 +326,21 @@ Resources:
       Properties:
         TemplateURL: !Join
                 - ''
-                - - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/attendees/iam.yml
+                - - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/attendees/iam.yml
 
     S3BucketStack:
       Type: AWS::CloudFormation::Stack
       Properties:
         TemplateURL: !Join
                 - ''
-                - - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/attendees/s3.yml
+                - - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/attendees/s3.yml
 
     Cloud9Stack:
       Type: AWS::CloudFormation::Stack
       Properties:
         TemplateURL: !Join
                 - ''
-                - - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/attendees/cloud9.yml
+                - - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/attendees/cloud9.yml
         Parameters:
           C9InstanceType: !Ref 'C9InstanceType'
           C9InstanceVolumeSize: !Ref 'C9InstanceVolumeSize'
@@ -351,7 +351,7 @@ Resources:
       Properties:
         TemplateURL: !Join
                 - ''
-                - - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/attendees/aurora.yml
+                - - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/attendees/aurora.yml
         Parameters:
           DBName: !Ref AuroraDBName
           DBPort: !Ref AuroraDBPort
@@ -372,7 +372,7 @@ Resources:
       Properties:
         TemplateURL: !Join
                 - ''
-                - - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/attendees/redshift.yml
+                - - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/attendees/redshift.yml
         Parameters:
           VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
           PublicSubnet1ID: !GetAtt 'VPCStack.Outputs.PublicSubnet1ID'
@@ -392,4 +392,4 @@ Resources:
       Properties:
         TemplateURL: !Join
                 - ''
-                - - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/templates/attendees/predictionapi.yml
+                - - https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/attendees/predictionapi.yml

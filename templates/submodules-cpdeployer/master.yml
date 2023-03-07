@@ -1104,7 +1104,7 @@ Resources:
         PrivateSubnet3ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet3AID'
         ClusterAutoScaler: Enabled
         ProvisionBastionHost: Enabled
-        ALBIngressController: Enabled
+#        ALBIngressController: Enabled
         EKSClusterName: !Ref AWS::StackName
 #        PerAccountSharedResources: 'No'
 #        PerRegionSharedResources: 'No'

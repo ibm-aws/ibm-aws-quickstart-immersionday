@@ -179,10 +179,10 @@ cp4d:
     state: |WKC|
     installation_options:
       install_wkc_core_only: False
-      enableKnowledgeGraph: True
-      enableDataQuality: True
-      enableFactSheet: True
-      enableMANTA: True
+      enableKnowledgeGraph: False
+      enableDataQuality: False
+      enableFactSheet: False
+      enableMANTA: False
 
   - name: wml
     size: small

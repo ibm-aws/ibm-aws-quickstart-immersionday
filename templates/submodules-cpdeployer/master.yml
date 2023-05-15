@@ -867,7 +867,7 @@ Parameters:
     AllowedValues:
       - "installed"
       - "removed"
-    Default: "installed"  
+    Default: "removed"  
   DB2:
     Description: >-
        Choose installed to install the DB2 service.

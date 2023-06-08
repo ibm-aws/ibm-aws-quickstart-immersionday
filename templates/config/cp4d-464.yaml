@@ -1,7 +1,7 @@
 ---
 cp4d:
 
-- project: zen-46
+- project: zen
   openshift_cluster_name: "{{ env_id }}"
   cp4d_version: 4.6.4
   accept_licenses: True

@@ -44,6 +44,7 @@ Metadata:
           - LicenseAgreement
           - APIKey
           - CA
+          - CDE
           - DB2
           - DB2U
           - DMC
@@ -112,6 +113,8 @@ Metadata:
         default: IBM Cloud Pak for Data API key
       CA:
         default: Choose installed to install the Cognos Analytics service.
+      CDE:
+        default: Choose installed to install the Cognos embedded dashboard service.
       DB2:
         default: Choose installed to install the DB2 service.
       DB2U:
@@ -867,7 +870,15 @@ Parameters:
     AllowedValues:
       - "installed"
       - "removed"
-    Default: "removed"  
+    Default: "removed"
+  CA:
+    Description: >-
+       Choose installed to install the Cognos embedded dashboard service.
+    Type: String
+    AllowedValues:
+      - "installed"
+      - "removed"
+    Default: "installed"      
   DB2:
     Description: >-
        Choose installed to install the DB2 service.
@@ -1064,6 +1075,7 @@ Resources:
         LicenseAgreement: !Ref LicenseAgreement
         CPDExternalRegistry: !Ref CPDExternalRegistry
         CA: !Ref CA
+        CDE: !Ref CDE
         DB2: !Ref DB2
         DB2U: !Ref DB2U
         DMC: !Ref DMC

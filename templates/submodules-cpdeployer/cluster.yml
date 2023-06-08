@@ -54,6 +54,7 @@ Metadata:
           default: Services
         Parameters:
           - CA
+          - CDE
           - DB2
           - DB2U
           - DMC
@@ -229,7 +230,15 @@ Parameters:
     AllowedValues:
       - "installed"
       - "removed"
-    Default: "removed"  
+    Default: "removed" 
+  CDE:
+    Description: >-
+       Choose installed to install the cognos embedded dashboard service.
+    Type: String
+    AllowedValues:
+      - "installed"
+      - "removed"
+    Default: "removed"    
   DB2:
     Description: >-
        Choose installed to install the DB2 service.
@@ -349,8 +358,7 @@ Parameters:
     AllowedValues:
       - "installed"
       - "removed"
-    Default: "removed"    
-
+    Default: "removed"
 Mappings:
   AWSAMIRegionMap:
     us-east-1:
@@ -732,6 +740,7 @@ Resources:
 
             # replace parameters in CPD
             sed -i 's/|CA|/'${CA}'/g' $HOME/cpd-config/config/cp4d-464.yaml
+            sed -i 's/|CDE|/'${CDE}'/g' $HOME/cpd-config/config/cp4d-464.yaml
             sed -i 's/|DB2|/'${DB2}'/g' $HOME/cpd-config/config/cp4d-464.yaml
             sed -i 's/|DB2U|/'${DB2U}'/g' $HOME/cpd-config/config/cp4d-464.yaml
             sed -i 's/|DMC|/'${DMC}'/g' $HOME/cpd-config/config/cp4d-464.yaml

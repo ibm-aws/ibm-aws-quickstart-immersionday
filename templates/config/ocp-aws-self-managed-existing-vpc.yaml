@@ -11,7 +11,7 @@ nfs_server:
 
 openshift:
 - name: "{{ env_id }}"
-  ocp_version: 4.12.18
+  ocp_version: 4.12.22
   domain_name: |DOMAIN_NAME|
   control_plane_flavour: |MASTER_INSTANCE_TYPE|
   control_plane_nodes: |MASTER_INSTANCE_NODE_COUNT|
@@ -19,6 +19,7 @@ openshift:
   compute_nodes: |COMPUTE_INSTANCE_NODE_COUNT|
   infrastructure:
     type: self-managed
+    ami_id: ami-09c8e71f0609f055c
     aws_region: "{{ aws_region }}"
     use_sts: False
     multi_zone: |MULTI_ZONE|

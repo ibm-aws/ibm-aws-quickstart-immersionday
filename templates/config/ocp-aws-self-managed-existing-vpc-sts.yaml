@@ -1,0 +1,37 @@
+---
+global_config:
+  environment_name: |CLUSTER_NAME|
+  cloud_platform: aws
+  aws_region: |AWS_REGION|
+
+nfs_server:
+- name: "{{ env_id }}-elastic"
+  infrastructure:
+    aws_region: "{{ aws_region }}"
+
+openshift:
+- name: "{{ env_id }}"
+  ocp_version: 4.12.22
+  domain_name: |DOMAIN_NAME|
+  control_plane_flavour: |MASTER_INSTANCE_TYPE|
+  control_plane_nodes: |MASTER_INSTANCE_NODE_COUNT|
+  compute_flavour: |COMPUTE_INSTANCE_TYPE|
+  compute_nodes: |COMPUTE_INSTANCE_NODE_COUNT|
+  infrastructure:
+    type: self-managed
+    aws_region: "{{ aws_region }}"
+    use_sts: True
+    credentials_mode: Manual
+    multi_zone: |MULTI_ZONE|
+    private_only: |PRIVATE_ONLY|
+    machine_cidr: |VPC_CIDR|
+    subnet_ids:
+    - |PRIVATE_SUBNET_1|
+    - |PRIVATE_SUBNET_2|
+    - |PRIVATE_SUBNET_3|
+    - |PUBLIC_SUBNET_1|
+    - |PUBLIC_SUBNET_2|
+    - |PUBLIC_SUBNET_3|
+  openshift_storage:
+  - storage_name: "{{ env_id }}-elastic"
+    storage_type: |STORAGE_TYPE|

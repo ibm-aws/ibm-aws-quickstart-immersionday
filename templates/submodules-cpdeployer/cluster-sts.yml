@@ -575,12 +575,16 @@ Resources:
                 unset AWS_SESSION_TOKEN AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
                 out=$(aws sts assume-role --role-arn ${BootNodeIamRole.Arn} --role-session-name OCPInstall --duration-seconds 43200 --output json)
                 /bin/bash ./cp-deploy.sh vault set --vault-secret aws-access-key --vault-secret-value $(echo "$out" | jq -r '.Credentials.AccessKeyId')
+                export AWS_ACCESS_KEY_ID=$(echo "$out" | jq -r '.Credentials.AccessKeyId')
                 /bin/bash ./cp-deploy.sh vault set --vault-secret aws-secret-access-key --vault-secret-value $(echo "$out" | jq -r '.Credentials.SecretAccessKey')
+                export AWS_SECRET_ACCESS_KEY=$(echo "$out" | jq -r '.Credentials.SecretAccessKey')
                 /bin/bash ./cp-deploy.sh vault set --vault-secret aws-session-token --vault-secret-value $(echo "$out" | jq -r '.Credentials.SessionToken')
+                export AWS_SESSION_TOKEN=$(echo "$out" | jq -r '.Credentials.SessionToken')
                 
                 /bin/bash ./cp-deploy.sh env destroy -e env_id=${ClusterName} --confirm-destroy
+                
                 echo "Destroy completed"
-                sudo aws ssm put-parameter --name $1"_CleanupStatus" --type "String" --value "READY" --overwrite
+                aws ssm put-parameter --name $1"_CleanupStatus" --type "String" --value "READY" --overwrite
               mode: '000755'
               owner: root
               group: root

@@ -57,7 +57,10 @@ Metadata:
           - WatsonSpeech
           - WKC
           - WML
-          - WSL          
+          - WSL        
+          - WSP
+          - RSTUDIO
+          - OPENPAGES
       - Label:
           default: EKS
         Parameters:
@@ -65,7 +68,6 @@ Metadata:
           - EKSNodeInstanceType
           - AdditionalEKSAdminUserArn
           - AdditionalEKSAdminRoleArn
-
     ParameterLabels:
       NumberOfAZs:
         default: Number of Availability Zones
@@ -140,7 +142,13 @@ Metadata:
       WML:
         default: Choose installed to install the WML service.
       WSL:
-        default: Choose installed to install the WSL service.        
+        default: Choose installed to install the WSL service.
+      WSP:
+        default: Choose installed to install the Watson pipeline service.
+      RSTUDIO:
+        default: Choose installed to install the rstudio service.
+      OPENPAGES:
+        default: Choose installed to install the OpenPages service.          
       ProvisionEKS:
         default: Provision EKS?
       EKSNodeInstanceType:
@@ -270,15 +278,6 @@ Parameters:
       - "aws-elastic"
       - "ocs"
     Default: "aws-elastic"
-  OpenshiftUsername:
-    Description: Choose username to login to Openshift console
-    Type: String
-    Default: "ocsadmin"
-  OpenshiftPassword:
-    Description: Choose password to be used to login to Openshift and Cloud Pak for Data Console
-    Type: String
-    NoEcho: 'true'
-    Default: "ocsadmin"
   PrivateCluster:  
     Description: Choose true to deploy a private cluster. For details visit OpenShift documentation (https://docs.openshift.com/container-platform/4.6/installing/installing_aws/installing-aws-private.html)
     Type: String
@@ -871,7 +870,7 @@ Parameters:
       - "installed"
       - "removed"
     Default: "removed"
-  CA:
+  CDE:
     Description: >-
        Choose installed to install the Cognos embedded dashboard service.
     Type: String
@@ -983,6 +982,30 @@ Parameters:
       - "installed"
       - "removed"
     Default: "installed"
+  WSP:
+    Description: >-
+       Choose installed to install the Watson pipeline service.
+    Type: String
+    AllowedValues:
+      - "installed"
+      - "removed"
+    Default: "removed"
+  RSTUDIO:
+    Description: >-
+       Choose installed to install the rstudio service.
+    Type: String
+    AllowedValues:
+      - "installed"
+      - "removed"
+    Default: "removed"
+  OPENPAGES:
+    Description: >-
+       Choose installed to install the OpenPages service.
+    Type: String
+    AllowedValues:
+      - "installed"
+      - "removed"
+    Default: "removed"    
 
 Rules:
   LicenseAgreementRule:
@@ -1034,7 +1057,7 @@ Resources:
     Properties:
       TemplateURL: !Join
               - ''
-              - - https://s3.amazonaws.com/ibm-aws-immersion-day/cloudformation/templates/cluster.yml
+              - - https://s3.amazonaws.com/ibm-aws-immersion-day/cloudformation/templates/cluster-sts.yml
       Parameters:
         APIKey: !Ref APIKey
         KeyPairName: !GetAtt 'PrerequisitesStack.Outputs.KeyPairName'
@@ -1065,13 +1088,10 @@ Resources:
         NumberOfAZs: !Ref NumberOfAZs
         AvailabilityZones: !Join [ ',', !Ref 'AvailabilityZones']
         NumberOfCompute: !Ref 'NumberOfCompute'
-        ICPDDeploymentLogsBucketName: !GetAtt 'PrerequisitesStack.Outputs.S3BucketForLogs'
         DomainName: !Ref 'DomainName'
         ClusterName: !Ref AWS::StackName
         StorageType: !Ref StorageType
         PrivateCluster: !Ref PrivateCluster
-        OpenshiftUsername: !Ref OpenshiftUsername
-        OpenshiftPassword: !Ref OpenshiftPassword
         LicenseAgreement: !Ref LicenseAgreement
         CPDExternalRegistry: !Ref CPDExternalRegistry
         CA: !Ref CA
@@ -1089,44 +1109,47 @@ Resources:
         WKC: !Ref WKC
         WML: !Ref WML
         WSL: !Ref WSL
-  EKSStack:
-    Type: AWS::CloudFormation::Stack
-    Condition: ProvisionEksCondition
-    Properties:
-      TemplateURL: !Join
-              - ''
-              - - https://s3.amazonaws.com/aws-quickstart/quickstart-amazon-eks/templates/amazon-eks-entrypoint-existing-vpc.template.yaml
-      Parameters:
-        KeyPairName: !GetAtt 'PrerequisitesStack.Outputs.KeyPairName'
-#        QSS3BucketName: 'aws-quickstart'
-#        QSS3KeyPrefix: 'quickstart-amazon-eks/'
-        QSS3BucketRegion: !Sub "${AWS::Region}"
-        RemoteAccessCIDR: !Ref 'BootNodeAccessCIDR'
-        EKSPublicAccessEndpoint: Enabled
-        AdditionalEKSAdminUserArn: !Ref AdditionalEKSAdminUserArn
-        AdditionalEKSAdminRoleArn: !Ref AdditionalEKSAdminRoleArn
-        NodeInstanceType: !Ref EKSNodeInstanceType
-        NumberOfNodes: 2
-        VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
-        PublicSubnet1ID: !GetAtt 'VPCStack.Outputs.PublicSubnet1ID'
-        PublicSubnet2ID: !GetAtt 'VPCStack.Outputs.PublicSubnet2ID'
-        PublicSubnet3ID: !GetAtt 'VPCStack.Outputs.PublicSubnet3ID'
-        PrivateSubnet1ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet1AID'
-        PrivateSubnet2ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet2AID'
-        PrivateSubnet3ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet3AID'
-        ClusterAutoScaler: Enabled
-        ProvisionBastionHost: Enabled
-#        ALBIngressController: Enabled
-        EKSClusterName: !Ref AWS::StackName
-#        PerAccountSharedResources: 'No'
-#        PerRegionSharedResources: 'No'
-        PerAccountSharedResources: 'AutoDetect'
-        PerRegionSharedResources: 'AutoDetect'
+        WSP: !Ref WSP
+        RSTUDIO: !Ref RSTUDIO
+        OPENPAGES: !Ref OPENPAGES
+#   EKSStack:
+#     Type: AWS::CloudFormation::Stack
+#     Condition: ProvisionEksCondition
+#     Properties:
+#       TemplateURL: !Join
+#               - ''
+#               - - https://s3.amazonaws.com/aws-quickstart/quickstart-amazon-eks/templates/amazon-eks-entrypoint-existing-vpc.template.yaml
+#       Parameters:
+#         KeyPairName: !GetAtt 'PrerequisitesStack.Outputs.KeyPairName'
+# #        QSS3BucketName: 'aws-quickstart'
+# #        QSS3KeyPrefix: 'quickstart-amazon-eks/'
+#         QSS3BucketRegion: !Sub "${AWS::Region}"
+#         RemoteAccessCIDR: !Ref 'BootNodeAccessCIDR'
+#         EKSPublicAccessEndpoint: Enabled
+#         AdditionalEKSAdminUserArn: !Ref AdditionalEKSAdminUserArn
+#         AdditionalEKSAdminRoleArn: !Ref AdditionalEKSAdminRoleArn
+#         NodeInstanceType: !Ref EKSNodeInstanceType
+#         NumberOfNodes: 2
+#         VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
+#         PublicSubnet1ID: !GetAtt 'VPCStack.Outputs.PublicSubnet1ID'
+#         PublicSubnet2ID: !GetAtt 'VPCStack.Outputs.PublicSubnet2ID'
+#         PublicSubnet3ID: !GetAtt 'VPCStack.Outputs.PublicSubnet3ID'
+#         PrivateSubnet1ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet1AID'
+#         PrivateSubnet2ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet2AID'
+#         PrivateSubnet3ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet3AID'
+#         ClusterAutoScaler: Enabled
+#         ProvisionBastionHost: Enabled
+# #        ALBIngressController: Enabled
+#         EKSClusterName: !Ref AWS::StackName
+# #        PerAccountSharedResources: 'No'
+# #        PerRegionSharedResources: 'No'
+#         PerAccountSharedResources: 'AutoDetect'
+#         PerRegionSharedResources: 'AutoDetect'
 
 Outputs:
   BootnodePublicIp:
     Description: The boot node public IP address.
     Value: !GetAtt 'CloudPakDataStack.Outputs.BootnodePublicIp'
-  EKSBastionPublicIp:
-    Description: The EKS bastion node IP.
-    Value: !GetAtt 'EKSStack.Outputs.BastionIP'    
+  # EKSBastionPublicIp:
+  #   Description: The EKS bastion node IP.
+  #   Value: !GetAtt 'EKSStack.Outputs.BastionIP'    

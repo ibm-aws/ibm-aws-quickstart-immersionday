@@ -557,6 +557,9 @@ Resources:
                 export ROSA_LOGIN_TOKEN=${RosaToken}
                 cd $HOME/cloud-pak-deployer
                 /bin/bash ./cp-deploy.sh build
+                /bin/bash ./cp-deploy.sh vault set --vault-secret aws-access-key --vault-secret-value $(echo "$out" | jq -r '.Credentials.AccessKeyId')
+                /bin/bash ./cp-deploy.sh vault set --vault-secret aws-secret-access-key --vault-secret-value $(echo "$out" | jq -r '.Credentials.SecretAccessKey')
+                /bin/bash ./cp-deploy.sh vault set --vault-secret aws-session-token --vault-secret-value $(echo "$out" | jq -r '.Credentials.SessionToken')
                 /bin/bash ./cp-deploy.sh env destroy -e env_id=${ClusterName} --confirm-destroy
                 aws ssm put-parameter --name "$1_CleanupStatus" --type "String" --value "READY" --overwrite
                 echo "Destroy completed"

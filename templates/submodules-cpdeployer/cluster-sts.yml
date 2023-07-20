@@ -625,7 +625,7 @@ Resources:
             #!/bin/bash -x
             
             #Added the next 5 lines to include required tools for the installation of CP4D
-            yum update
+            yum update -y
             yum install -y git podman wget jq python39 unzip
             podman version
 

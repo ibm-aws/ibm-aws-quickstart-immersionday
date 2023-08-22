@@ -49,6 +49,7 @@ Metadata:
           default: Services
         Parameters:
           - CA
+          - CDE
           - DB2
           - DB2U
           - DMC
@@ -200,6 +201,14 @@ Parameters:
       - "installed"
       - "removed"
     Default: "removed"  
+  CDE:
+    Description: >-
+       Choose installed to install the cognos embedded dashboard service.
+    Type: String
+    AllowedValues:
+      - "installed"
+      - "removed"
+    Default: "removed"    
   DB2:
     Description: >-
        Choose installed to install the DB2 service.
@@ -462,6 +471,7 @@ Resources:
             - Ref: AWS::AccountId
           Action:
           - "sts:AssumeRole"
+      MaxSessionDuration: 43200
       Path: "/"
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
@@ -674,6 +684,7 @@ Resources:
 
             # replace parameters in CPD
             sed -i 's/|CA|/'${CA}'/g' $HOME/cpd-config/config/cp4d-466.yaml
+            sed -i 's/|CDE|/'${CDE}'/g' $HOME/cpd-config/config/cp4d-466.yaml
             sed -i 's/|DB2|/'${DB2}'/g' $HOME/cpd-config/config/cp4d-466.yaml
             sed -i 's/|DB2U|/'${DB2U}'/g' $HOME/cpd-config/config/cp4d-466.yaml
             sed -i 's/|DMC|/'${DMC}'/g' $HOME/cpd-config/config/cp4d-466.yaml
@@ -691,9 +702,13 @@ Resources:
             sed -i 's/|RSTUDIO|/'${RSTUDIO}'/g' $HOME/cpd-config/config/cp4d-466.yaml
             sed -i 's/|OPENPAGES|/'${OPENPAGES}'/g' $HOME/cpd-config/config/cp4d-466.yaml
 
-
-            wget https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/config/ocp-aws-rosa-elastic.yaml
-            cp ./ocp-aws-rosa-elastic.yaml $HOME/cpd-config/config/ocp-aws-rosa-elastic.yaml
+            if [ "${MultiAZ}" == "True" ]; then
+              wget https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/config/ocp-aws-rosa-elastic.yaml
+              cp ./ocp-aws-rosa-elastic.yaml $HOME/cpd-config/config/ocp-aws-rosa-elastic.yaml
+            else
+              wget https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/config/ocp-aws-rosa-elastic-1az.yaml
+              cp ./ocp-aws-rosa-elastic-1az.yaml $HOME/cpd-config/config/ocp-aws-rosa-elastic.yaml
+            fi
 
             # replace parameters in openshift 
             sed -i 's/|CLUSTER_NAME|/'${ClusterName}'/g' $HOME/cpd-config/config/ocp-aws-rosa-elastic.yaml

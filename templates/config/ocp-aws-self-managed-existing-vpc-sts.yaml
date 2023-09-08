@@ -11,7 +11,7 @@ nfs_server:
 
 openshift:
 - name: "{{ env_id }}"
-  ocp_version: 4.12.28
+  ocp_version: 4.12.24
   domain_name: |DOMAIN_NAME|
   control_plane_flavour: |MASTER_INSTANCE_TYPE|
   control_plane_nodes: |MASTER_INSTANCE_NODE_COUNT|

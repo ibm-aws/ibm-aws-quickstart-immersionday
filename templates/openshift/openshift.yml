@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Template for an IBM Cloud Pak for Data deployment.
+Description: Template for an self-managed Openshift deployment.
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:

@@ -26,7 +26,7 @@ Metadata:
           - WorkerVolumeIOPS
           - WorkerVolumeSize
           - WorkerVolumeType
-          - workerCount
+          - WorkerCount
       - Label: 
           default: OCS/ODF Storage configuration
         Parameters:
@@ -145,7 +145,7 @@ Parameters:
       - r5.18xlarge
       - r5.24xlarge
     ConstraintDescription: Must contain valid instance type
-    Description: The EC2 instance type for the OpenShift woorker instances.
+    Description: The EC2 instance type for the OpenShift worker instances.
     Type: String
   WorkerVolumeIOPS:
     Default: 2000
@@ -166,11 +166,12 @@ Parameters:
       - gp2
       - io1
       - io2
-  workerCount:
+  WorkerCount:
     Default: '3'
     Description: The desired capacity for the OpenShift worker. Minimum of 3 nodes required. If the number of worker instances exceeds your Red Hat entitlement limits or AWS instance limits, the stack will fail. Choose a number that is within your limits.
     Type: Number
   OcsInstanceType:
+    Description: The EC2 instance type for the OCS/ODF cluster instances.
     Default: m5.4xlarge
     Type: String
     AllowedValues:
@@ -621,7 +622,7 @@ Resources:
             fi
 
             # add worker node count
-            yq -i ".compute[0].replicas = ${workerCount}" install-config.yaml
+            yq -i ".compute[0].replicas = ${WorkerCount}" install-config.yaml
 
             # control plane
             yq -i '.controlPlane.architecture = "amd64"' install-config.yaml

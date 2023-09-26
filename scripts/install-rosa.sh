@@ -1,0 +1,375 @@
+#!/bin/bash
+
+
+### command with all arguments
+##### create cluster
+### nohup ./rosa.sh --operation=create --cluster-name=test --compute-machine-type=m5.4xlarge --replicas=3 --region=us-east-2 --machine-cidr=10.0.0.0/16 --service-cidr=172.30.0.0/16 --pod-cidr=10.128.0.0/14 --host-prefix=23 --private=false --multi-az=true --version=4.12.15 --subnets=subnet-5c7d2d610d4db25f,subnet-15bca0698e9b4c41,subnet-3ed7835a97324708,subnet-68bc9661bea107d1,subnet-5a6043f88f7c2461,subnet-a3646c21243f87f9 --fips=false --rosa-token=eyJhbGciOiJIUzI1NiIsInR5cCIgO &
+##### destroy cluster
+### nohup ./rosa.sh --operation=destroy --cluster-name=test --region=us-east-2 --rosa-token=eyJhbGciOiJIUzI1NiIsInR5cCIgO &
+
+# validate command line options
+function validate_cmd_options() {
+
+    if [[ $operation == "create" ]]; then
+        # validate compute_machine_type
+        if [ -z $compute_machine_type ]; then
+            echo "compute_machine_type cannot be blank or empty"
+            exit 1;
+        fi
+
+        # validate replicas
+        if [[ -z $replicas || $replicas -lt 1 ]]; then
+            echo "replicas cannot be blank or empty and it must be greater than zero"
+            exit 1;
+        fi
+
+        # validate machine_cidr
+        if [ -z $machine_cidr ]; then
+            echo "machine_cidr cannot be blank or empty"
+            exit 1;
+        fi
+
+        # validate service_cidr
+        if [ -z $service_cidr ]; then
+            echo "service_cidr cannot be blank or empty"
+            exit 1;
+        fi
+
+        # validate pod_cidr
+        if [ -z $pod_cidr ]; then
+            echo "pod_cidr cannot be blank or empty"
+            exit 1;
+        fi
+
+        # validate host_prefix
+        if [ -z $host_prefix ]; then
+            echo "host_prefix cannot be blank or empty"
+            exit 1;
+        fi
+
+        # validate private
+        case "$private" in
+        "true")
+            ;;
+        "false")
+            ;;
+        *)
+            echo "The private can either true or false only."
+            exit 1;
+            ;;
+        esac
+
+        # validate multi_az
+        case "$multi_az" in
+        "true")
+            ;;
+        "false")
+            ;;
+        *)
+            echo "The multi_az can either true or false only."
+            exit 1;
+            ;;
+        esac
+
+        # validate host_prefix
+        if [ -z $version ]; then
+            echo "version cannot be blank or empty"
+            exit 1;
+        fi
+
+        # validate subnets
+        if [ -z $subnets ]; then
+            echo "subnets cannot be blank or empty"
+            echo "Please maintain subents logical orders with separated comma(,). All private subnets first followed by public subents"
+            echo "i.e. private-subnet-zone-a,private-subnet-zone-b,private-subnet-zone-c,public-subent-zone-a,public-subent-zone-b,public-subent-zone-c"
+            exit 1;
+        fi
+
+        # validate fips
+        case "$fips" in
+        "true")
+            ;;
+        "false")
+            ;;
+        *)
+            echo "The fips can either true or false only."
+            exit 1;
+            ;;
+        esac
+
+        echo "compute_machine_type.."$compute_machine_type
+        echo "replicas.."$replicas
+        echo "machine_cidr.."$machine_cidr
+        echo "service_cidr.."$service_cidr
+        echo "pod_cidr.."$pod_cidr
+        echo "host_prefix.."$host_prefix
+        echo "private.."$private
+        echo "multi_az.."$multi_az
+        echo "version.."$version
+        echo "subnets.."$subnets
+        echo "fips.."$fips
+    fi
+
+    # validate cluster_name
+    if [[ -z $cluster_name || ${#cluster_name} -ge 15 ]]; then
+        echo "cluster_name cannot be blank or empty and it must be less than 15 charagets"
+        exit 1;
+    fi
+
+    # validate region
+    if [ -z $region ]; then
+        echo "AWS region cannot be blank or empty"
+        exit 1;
+    fi
+
+    # validate rosa token
+    if [ -z $rosa_token ]; then
+        echo "rosa-token cannot be blank or empty"
+        exit 1;
+    fi
+
+    echo "cluster_name.."$cluster_name
+    echo "region.."$region
+    echo "rosa_token.."$rosa_token
+
+}
+
+# identify rosa subnets
+function identify_subnets() {
+    # Print the array elements
+    # echo ${subnets_arr[0]}
+    if [ $private == "true" ]; then
+        if [ $multi_az == "true" ]; then
+            multi_zone_subnets=${subnets_arr[0]},${subnets_arr[1]},${subnets_arr[2]}
+        else
+            single_zone_subnets=${subnets_arr[0]}
+        fi
+    else
+        if [ $multi_az == "true" ]; then
+            multi_zone_subnets=${subnets_arr[0]},${subnets_arr[1]},${subnets_arr[2]},${subnets_arr[3]},${subnets_arr[4]},${subnets_arr[5]}
+        else
+            single_zone_subnets=${subnets_arr[0]},${subnets_arr[3]}
+        fi
+    fi 
+
+    if [ $multi_az == "true" ]; then
+        rosa_subnets=$multi_zone_subnets
+    else
+        rosa_subnets=$single_zone_subnets
+    fi
+}
+
+# download rosa cli
+function download_binaries() {
+    wget -r -l1 -np -nd -q $rosa_cli_url -P $installer_workspace
+    tar -xvzf $installer_workspace/rosa-linux.tar.gz -C $installer_workspace/
+    chmod u+x $installer_workspace/rosa
+}
+
+# create_AWSServiceRoleForElasticLoadBalancing
+function create_AWSServiceRoleForElasticLoadBalancing() {
+    aws iam get-role --role-name "AWSServiceRoleForElasticLoadBalancing" || aws iam create-service-linked-role --aws-service-name "elasticloadbalancing.amazonaws.com"
+}
+
+# setup environment
+function setup_environment() {
+    #split subnets with comma
+    subnets_arr=($(echo "$subnets" | tr "," " "))
+
+    # rosa subnets
+    identify_subnets
+    echo "cluster_subnets.."$rosa_subnets
+    echo "***** cluster subnets identification is completed *****"
+
+    # download all binaries to installer-files
+    download_binaries
+    echo "***** all download binaries is completed *****"
+
+    # create AWS service role for elasticloadbalancing
+    create_AWSServiceRoleForElasticLoadBalancing
+    echo "***** created AWS service link is completed *****"
+}
+
+# rosa login
+function rosa_login() {
+    $installer_workspace/rosa login --token=$rosa_token
+}
+
+# install rosa cluster
+function install_rosa_cluster() {
+    if [ $private == "true" ]; then
+        private_link="--private-link"
+    else
+        private_link=""
+    fi
+
+
+    version_arr=($(echo "$version" | tr "." " "))
+    rosa_major_minor_version=${version_arr[0]}.${version_arr[1]}
+
+    # verify rosa quota
+    $installer_workspace/rosa verify quota &&
+    ecode=$?
+
+    # create rosa account IAM roles
+    if [ $ecode == 0 ]; then
+        $installer_workspace/rosa create account-roles --mode auto --yes --version $rosa_major_minor_version && $installer_workspace/rosa create oidc-config --yes --output json  --mode auto
+        ecode=$?
+    else
+        echo "rosa verify quota check is failed"
+        exit 1;
+    fi
+
+    # install rosa cluster
+    if [ $ecode == 0 ]; then
+        echo "Triggering cluster creation...."
+        $installer_workspace/rosa create cluster $private_link --cluster-name=$cluster_name --compute-machine-type=$compute_machine_type --replicas $replicas --region $region --machine-cidr=$machine_cidr --service-cidr=$service_cidr --pod-cidr=$pod_cidr --host-prefix=$host_prefix --private=$private --multi-az=$multi_az --version=$version --subnet-ids=$rosa_subnets  --fips=$fips --watch --yes --sts --mode auto && $installer_workspace/rosa logs install --cluster=$cluster_name --watch
+        ecode=$?
+    else
+        echo "Failed to create rosa IAM roles"
+        exit 1;
+    fi
+
+    if [ $ecode == 0 ]; then
+        $installer_workspace/rosa describe cluster --cluster=$cluster_name
+        $installer_workspace/rosa create admin --cluster=$cluster_name > $installer_workspace/.creds
+        sleep 300
+    else
+        echo "Failed to create rosa cluster"
+    fi
+}
+
+# Destroy rosa cluster
+function destroy_rosa_cluster() {
+        
+    CLUSTER_ID=$($installer_workspace/rosa describe cluster --cluster=$cluster_name -o json | jq --raw-output .id)
+    ecode=$?
+    echo "CLUSTER_ID.."$CLUSTER_ID
+
+    # get cluster id
+    if [ $ecode == 0 ]; then
+        $installer_workspace/rosa delete cluster --cluster=$cluster_name --yes && $installer_workspace/rosa logs uninstall -c $cluster_name --watch
+        $installer_workspace/rosa delete operator-roles -c=$CLUSTER_ID --mode auto --yes
+        $installer_workspace/rosa delete oidc-provider -c=$CLUSTER_ID --mode auto --yes
+        ecode=$?
+    else
+        echo "Failed to describe cluster"
+    fi
+
+    # 
+}
+
+##### script execution is started from below #####
+# create installer files
+mkdir -p ./installer-files
+
+export installer_workspace=./installer-files
+export rosa_cli_url=https://mirror.openshift.com/pub/openshift-v4/clients/rosa/latest/rosa-linux.tar.gz
+
+SHORT=cn:,cmt:,rep:,r:,mc:,sc:,pc:,hp:,p:,maz:,ver:,s:,f:,rt:,op:,h
+LONG=cluster-name:,compute-machine-type:,replicas:,region:,machine-cidr:,service-cidr:,pod-cidr:,host-prefix:,private:,multi-az:,version:,subnets:,fips:,rosa-token:,operation:,help
+OPTS=$(getopt -a -n weather --options $SHORT --longoptions $LONG -- "$@")
+
+eval set -- "$OPTS"
+
+while :
+do
+  case "$1" in
+    -cn | --cluster-name )
+      cluster_name="$2"
+      shift 2
+      ;;
+    -cmt | --compute-machine-type )
+      compute_machine_type="$2"
+      shift 2
+      ;;
+    -rep | --replicas )
+      replicas="$2"
+      shift 2
+      ;;
+    -r | --region )
+      region="$2"
+      shift 2
+      ;;
+    -mc | --machine-cidr )
+      machine_cidr="$2"
+      shift 2
+      ;;
+    -sc | --service-cidr )
+      service_cidr="$2"
+      shift 2
+      ;;
+    -pc | --pod-cidr )
+      pod_cidr="$2"
+      shift 2
+      ;;
+    -hp | --host-prefix )
+      host_prefix="$2"
+      shift 2
+      ;;
+    -p | --private )
+      private="$2"
+      shift 2
+      ;;
+    -maz | --multi-az )
+      multi_az="$2"
+      shift 2
+      ;;
+    -ver | --version )
+      version="$2"
+      shift 2
+      ;;
+    -s | --subnets )
+      subnets="$2"
+      shift 2
+      ;;
+    -f | --fips )
+      fips="$2"
+      shift 2
+      ;;
+    -rt | --rosa-token )
+      rosa_token="$2"
+      shift 2
+      ;;
+    -op | --operation )
+      operation="$2"
+      shift 2
+      ;;
+
+    -h | --help)
+      "This is a weather script"
+      exit 2
+      ;;
+    --)
+      shift;
+      break
+      ;;
+    *)
+      echo "Unexpected option: $1"
+      ;;
+  esac
+done
+
+validate_cmd_options
+echo "***** all cmd options validation is completed *****"
+
+# rosa login
+rosa_login
+echo "***** rosa login is completed *****"
+
+# install rosa cluster
+case "$operation" in
+"create")
+    setup_environment
+    install_rosa_cluster
+    echo "Cluster creation is completed"
+    ;;
+"destroy")
+    destroy_rosa_cluster
+    echo "Cluster is destroyed"
+    ;;
+*)
+    echo "The operation can either create or destroy only"
+    exit 1;
+    ;;
+esac

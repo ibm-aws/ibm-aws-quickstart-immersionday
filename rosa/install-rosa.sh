@@ -145,7 +145,7 @@ function validate_cmd_options() {
     echo "cluster_name.."$cluster_name
     echo "region.."$region
     echo "rosa_token.."$rosa_token
-
+    echo "***** All arguments are validated *****"
 }
 
 # identify rosa subnets
@@ -173,6 +173,8 @@ function identify_subnets() {
     else
         rosa_subnets=$single_zone_subnets
     fi
+    echo "rosa_subnets.."$rosa_subnets
+    echo "***** Subents are identified *****"
 }
 
 # download rosa cli
@@ -191,11 +193,13 @@ function download_binaries() {
 
     sudo mv $installer_workspace/kubectl /usr/local/bin
     sudo cp /usr/local/bin/kubectl /usr/bin/
+    echo "***** All binaries are downloaded *****"
 }
 
 # create_AWSServiceRoleForElasticLoadBalancing
 function create_AWSServiceRoleForElasticLoadBalancing() {
     aws iam get-role --role-name "AWSServiceRoleForElasticLoadBalancing" || aws iam create-service-linked-role --aws-service-name "elasticloadbalancing.amazonaws.com"
+    echo "***** AWS service role for elastic load balancing is found or created *****"
 }
 
 # setup environment
@@ -203,15 +207,12 @@ function setup_environment() {
     # rosa subnets
     identify_subnets
     echo "cluster_subnets.."$rosa_subnets
-    echo "***** cluster subnets identification is completed *****"
 
     # download all binaries to installer-files
     download_binaries
-    echo "***** all download binaries is completed *****"
 
     # create AWS service role for elasticloadbalancing
     create_AWSServiceRoleForElasticLoadBalancing
-    echo "***** created AWS service link is completed *****"
 }
 
 # rosa login
@@ -240,11 +241,13 @@ function install_rosa_cluster() {
     # verify rosa quota
     $installer_workspace/rosa verify quota &&
     ecode=$?
+    echo "***** Rosa quota is verified *****"
 
     # create rosa account IAM roles
     if [ $ecode == 0 ]; then
         $installer_workspace/rosa create account-roles --mode auto --yes --version $rosa_major_minor_version && $installer_workspace/rosa create oidc-config --yes --output json  --mode auto
         ecode=$?
+        echo "***** rosa account role is created *****"
     else
         echo "rosa verify quota check is failed"
         exit 1;
@@ -255,6 +258,7 @@ function install_rosa_cluster() {
         echo "Triggering cluster creation...."
         $installer_workspace/rosa create cluster $private_link --cluster-name=$cluster_name --compute-machine-type=$compute_machine_type --replicas $replicas --region $region --machine-cidr=$machine_cidr --service-cidr=$service_cidr --pod-cidr=$pod_cidr --host-prefix=$host_prefix --private=$private --multi-az=$multi_az --version=$version --subnet-ids=$rosa_subnets  --fips=$fips --watch --yes --sts --mode auto && $installer_workspace/rosa logs install --cluster=$cluster_name --watch
         ecode=$?
+        echo "***** rosa cluster is created *****"
     else
         echo "Failed to create rosa IAM roles"
         exit 1;
@@ -264,6 +268,7 @@ function install_rosa_cluster() {
         $installer_workspace/rosa describe cluster --cluster=$cluster_name
         $installer_workspace/rosa create admin --cluster=$cluster_name > $cred_path
         ecode=$?
+        echo "***** rosa cluster admin user is created *****"
         sleep 300
     else
         echo "Failed to create rosa cluster"
@@ -273,6 +278,7 @@ function install_rosa_cluster() {
         configure_storage
     else
         echo "Failed to create admin user"
+        exit 1;
     fi
 }
 
@@ -310,6 +316,7 @@ function setup_odf() {
 function destroy_rosa_cluster() {
     storage=$(cat "$info_path" | grep -oE -- 'storage ([^ ]+)' | cut -d' ' -f2)
     destroy_storage || true
+    echo "***** Cluster storage is destroyed *****"
 
     cluster_id=$($installer_workspace/rosa describe cluster --cluster=$cluster_name -o json | jq --raw-output .id)
     ecode=$?
@@ -318,9 +325,14 @@ function destroy_rosa_cluster() {
     # get cluster id
     if [ $ecode == 0 ]; then
         $installer_workspace/rosa delete cluster --cluster=$cluster_name --yes && $installer_workspace/rosa logs uninstall -c $cluster_name --watch
+        echo "***** Cluster is destroyed *****"
         $installer_workspace/rosa delete operator-roles -c=$cluster_id --mode auto --yes
+        echo "***** Cluster operator roles are destroyed *****"
         $installer_workspace/rosa delete oidc-provider -c=$cluster_id --mode auto --yes
+        echo "***** Cluster OIDC is destroyed *****"
         ecode=$?
+        rm -f $cred_path
+        rm -f $info_path
     else
         echo "Failed to describe cluster"
     fi
@@ -454,27 +466,22 @@ do
 done
 
 validate_cmd_options
-echo "***** all cmd options validation is completed *****"
 
 # rosa login
 rosa_login
-echo "***** rosa login is completed *****"
 
 # install rosa cluster
 case "$operation" in
 "create")
     setup_environment
     install_rosa_cluster
-    echo "Cluster creation is completed"
     ;;
 "destroy")
     destroy_rosa_cluster
-    echo "Cluster is destroyed"
     ;;
 "storage")
     identify_subnets
     configure_storage
-    echo "storage is completed"
     ;;
 *)
     echo "The operation can either create or destroy only"

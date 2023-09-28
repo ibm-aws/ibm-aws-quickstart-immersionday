@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # validate cmd options
 function validate_cmd_options() {
@@ -43,6 +44,7 @@ function validate_cmd_options() {
         exit 1;
     fi
 
+    echo "***** All arguments are validated *****"
 }
 
 function destroy_efs() {
@@ -58,22 +60,22 @@ function destroy_efs() {
   sleep 60
 
   aws efs delete-file-system --file-system-id $efs_filesystem_id
-  echo "efs file system $efs_filesystem_id is destroyed"
+  echo "***** efs file system $efs_filesystem_id is destroyed *****"
 } 
 
 # authorize worker security group for efs
 function authorize_security_group_ingress() {
     aws ec2 authorize-security-group-ingress --group-id $cluster_worker_security_groupid --protocol tcp --port 2049 --cidr $cluster_vpc_cidr | jq . || true
+    echo "***** authorize_security_group_ingress is completed *****"   
 }
 
 # create EFS
 function create_efs() {
     cluster_name=$(echo "$cluster_url" | sed -e 's|https://api\.\([^\.]*\).*|\1|')
-    echo "cluster_name..$cluster_name"
 
     filesystem_id=$(aws efs create-file-system --performance-mode generalPurpose --encrypted --region ${aws_region} --tags Key=Name,Value=${cluster_name}-elastic | jq -r '.FileSystemId')
     echo "efs_filesystem_id "$filesystem_id >> $info_path
-    
+    echo "***** EFS filesystem $filesystem_id is created *****"
     sleep 10
 
     # create mount point
@@ -90,12 +92,13 @@ function create_efs_mountpoints() {
     done
     mnt="${mnt%,}"
     echo "efs_mount_points "$mnt >> $info_path
+    echo "***** EFS mountpoints are created *****"
     sleep 300
 }
 
 # oc login
 function oc_login() {
-    oc login $cluster_url --username $cluster_username --password $cluster_password
+    oc login $cluster_url --username $cluster_username --password $cluster_password --insecure-skip-tls-verify
     if [ $? == 0 ]; then
         echo "oc login successfully!!"
     else
@@ -340,15 +343,12 @@ if [[ $operation == "create" ]]; then
 
   # open 2049 port for vpc cidr
   authorize_security_group_ingress
-  echo "***** VPC CIDR is authorized EFS port in SG completed *****"
 
   # create efs
   create_efs
 
   echo "info.."$(cat $info_path)
-  echo "***** EFS creation is completed *****"
 
-  # assicate EFS with openshift
   setup_nfs
 elif [[ $operation == "destroy" ]]; then
   destroy_efs

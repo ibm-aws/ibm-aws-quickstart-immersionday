@@ -1,16 +1,17 @@
 #!/bin/bash
 
-
 ### command with all arguments
 ##### create cluster
-### nohup ./rosa.sh --operation=create --cluster-name=test --compute-machine-type=m5.4xlarge --replicas=3 --region=us-east-2 --machine-cidr=10.0.0.0/16 --service-cidr=172.30.0.0/16 --pod-cidr=10.128.0.0/14 --host-prefix=23 --private=false --multi-az=true --version=4.12.15 --subnets=subnet-5c7d2d610d4db25f,subnet-15bca0698e9b4c41,subnet-3ed7835a97324708,subnet-68bc9661bea107d1,subnet-5a6043f88f7c2461,subnet-a3646c21243f87f9 --fips=false --rosa-token=eyJhbGciOiJIUzI1NiIsInR5cCIgO &
+### nohup ./rosa.sh --operation=create --cluster-name=rosa-d01 --compute-machine-type=m5.4xlarge --replicas=3 --region=us-east-2 --machine-cidr=10.0.0.0/16 --service-cidr=172.30.0.0/16 --pod-cidr=10.128.0.0/14 --host-prefix=23 --private=false --multi-az=true --version=4.12.15 --storage=efs --subnets=subnet-5c7d2d610d4db25f,subnet-15bca0698e9b4c41,subnet-3ed7835a97324708,subnet-68bc9661bea107d1,subnet-5a6043f88f7c2461,subnet-a3646c21243f87f9 --fips=false --rosa-token=eyJhbGciOiJIUIqTFJv3GKs9d8k &
 ##### destroy cluster
-### nohup ./rosa.sh --operation=destroy --cluster-name=test --region=us-east-2 --rosa-token=eyJhbGciOiJIUzI1NiIsInR5cCIgO &
+### nohup ./rosa.sh --operation=destroy --cluster-name=rosa-d01 --region=us-east-2 --rosa-token=eyJhbGciOiJIUIqTFJv3GKs9d8k &
+#### storage
+### nohup ./rosa.sh --operation=storage --cluster-name=rosa-d01 --compute-machine-type=m5.4xlarge --replicas=3 --region=us-east-2 --machine-cidr=10.0.0.0/16 --service-cidr=172.30.0.0/16 --pod-cidr=10.128.0.0/14 --host-prefix=23 --private=false --multi-az=true --version=4.12.15 --storage=efs --subnets=subnet-5c7d2d610d4db25f,subnet-15bca0698e9b4c41,subnet-3ed7835a97324708,subnet-68bc9661bea107d1,subnet-5a6043f88f7c2461,subnet-a3646c21243f87f9 --fips=false --rosa-token=eyJhbGciOiJIUIqTFJv3GKs9d8k &
 
 # validate command line options
 function validate_cmd_options() {
 
-    if [[ $operation == "create" ]]; then
+    if [[ $operation == "create" || $operation == "storage" ]]; then
         # validate compute_machine_type
         if [ -z $compute_machine_type ]; then
             echo "compute_machine_type cannot be blank or empty"
@@ -97,6 +98,19 @@ function validate_cmd_options() {
             ;;
         esac
 
+        # validate storage
+        case "$storage" in
+        "efs")
+            ;;
+        "odf")
+            ;;
+        *)
+            echo "Invalid storage option. efs or odf are only valid option."
+            exit 1;
+            ;;
+        esac
+
+
         echo "compute_machine_type.."$compute_machine_type
         echo "replicas.."$replicas
         echo "machine_cidr.."$machine_cidr
@@ -136,6 +150,8 @@ function validate_cmd_options() {
 
 # identify rosa subnets
 function identify_subnets() {
+    #split subnets with comma
+    subnets_arr=($(echo "$subnets" | tr "," " "))
     # Print the array elements
     # echo ${subnets_arr[0]}
     if [ $private == "true" ]; then
@@ -164,6 +180,17 @@ function download_binaries() {
     wget -r -l1 -np -nd -q $rosa_cli_url -P $installer_workspace
     tar -xvzf $installer_workspace/rosa-linux.tar.gz -C $installer_workspace/
     chmod u+x $installer_workspace/rosa
+
+    wget "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${version}/openshift-client-linux-${version}.tar.gz"
+    mv openshift-client-linux-${version}.tar.gz $installer_workspace/openshift-client-linux-${version}.tar.gz
+    tar -xvf $installer_workspace/openshift-client-linux-${version}.tar.gz $installer_workspace/
+            
+    sudo chmod u+x $installer_workspace/oc $installer_workspace/kubectl
+    sudo mv $installer_workspace/oc /usr/local/bin
+    sudo cp /usr/local/bin/oc /usr/bin/
+
+    sudo mv $installer_workspace/kubectl /usr/local/bin
+    sudo cp /usr/local/bin/kubectl /usr/bin/
 }
 
 # create_AWSServiceRoleForElasticLoadBalancing
@@ -173,9 +200,6 @@ function create_AWSServiceRoleForElasticLoadBalancing() {
 
 # setup environment
 function setup_environment() {
-    #split subnets with comma
-    subnets_arr=($(echo "$subnets" | tr "," " "))
-
     # rosa subnets
     identify_subnets
     echo "cluster_subnets.."$rosa_subnets
@@ -193,6 +217,12 @@ function setup_environment() {
 # rosa login
 function rosa_login() {
     $installer_workspace/rosa login --token=$rosa_token
+    if [ $? == 0 ]; then
+        echo "rosa login successfully!!"
+    else
+        echo "rosa login failed!!"
+        exit 1;
+    fi
 }
 
 # install rosa cluster
@@ -232,25 +262,64 @@ function install_rosa_cluster() {
 
     if [ $ecode == 0 ]; then
         $installer_workspace/rosa describe cluster --cluster=$cluster_name
-        $installer_workspace/rosa create admin --cluster=$cluster_name > $installer_workspace/.creds
+        $installer_workspace/rosa create admin --cluster=$cluster_name > $cred_path
+        ecode=$?
         sleep 300
     else
         echo "Failed to create rosa cluster"
     fi
+
+    if [ $ecode == 0 ]; then
+        configure_storage
+    else
+        echo "Failed to create admin user"
+    fi
+}
+
+function configure_storage() {
+    case "$storage" in
+    "efs")
+        echo "storage "$storage > $info_path
+        setup_efs
+        ;;
+    "odf")
+        echo "storage "$storage > $info_path
+        setup_odf
+        ;;
+    *)
+        echo "Invalid storage option. efs or odf are only valid option."
+        exit 1;
+        ;;
+    esac
+}
+
+function setup_efs() {
+    credfile=$(cat $cred_path)
+    cluster_url=$(echo "$credfile" | grep -o 'https://[^ ]*')
+    cluster_username=$(echo "$credfile" | grep -oE -- '--username ([^ ]+)' | cut -d' ' -f2)
+    cluster_password=$(echo "$credfile" | grep -oE -- '--password ([^ ]+)' | cut -d' ' -f2)
+    echo "cluster_url: $cluster_url, cluster_username: $cluster_username, cluster_password: $cluster_password, subnets: $rosa_subnets"
+    $script_path/setup-efs.sh --info-path=$info_path --subnets=$rosa_subnets --region=$region --cluster-url=$cluster_url --cluster-username=$cluster_username --cluster-password=$cluster_password --operation="create"
+}
+
+function setup_odf() {
+    echo "odf is currently not supported. It'll available soon!!"
 }
 
 # Destroy rosa cluster
 function destroy_rosa_cluster() {
-        
-    CLUSTER_ID=$($installer_workspace/rosa describe cluster --cluster=$cluster_name -o json | jq --raw-output .id)
+    storage=$(cat "$info_path" | grep -oE -- 'storage ([^ ]+)' | cut -d' ' -f2)
+    destroy_storage || true
+
+    cluster_id=$($installer_workspace/rosa describe cluster --cluster=$cluster_name -o json | jq --raw-output .id)
     ecode=$?
-    echo "CLUSTER_ID.."$CLUSTER_ID
+    echo "cluster_id.."$cluster_id
 
     # get cluster id
     if [ $ecode == 0 ]; then
         $installer_workspace/rosa delete cluster --cluster=$cluster_name --yes && $installer_workspace/rosa logs uninstall -c $cluster_name --watch
-        $installer_workspace/rosa delete operator-roles -c=$CLUSTER_ID --mode auto --yes
-        $installer_workspace/rosa delete oidc-provider -c=$CLUSTER_ID --mode auto --yes
+        $installer_workspace/rosa delete operator-roles -c=$cluster_id --mode auto --yes
+        $installer_workspace/rosa delete oidc-provider -c=$cluster_id --mode auto --yes
         ecode=$?
     else
         echo "Failed to describe cluster"
@@ -259,15 +328,45 @@ function destroy_rosa_cluster() {
     # 
 }
 
+# destroy cluster storage
+function destroy_storage() {
+    case "$storage" in
+    "efs")
+        destroy_efs
+        ;;
+    "odf")
+        destroy_odf
+        ;;
+    *)
+        echo "Invalid storage option. efs or odf are only valid option."
+        exit 1;
+        ;;
+    esac
+}
+
+# destroy efs
+function destroy_efs() {
+    $script_path/setup-efs.sh --info-path=$info_path --operation="destroy"
+}
+
+# destroy odf
+function destroy_odf() {
+    echo "odf is currently not supported. It'll available soon!!"
+}
+
 ##### script execution is started from below #####
 # create installer files
-mkdir -p ./installer-files
+mkdir -p $(pwd)/installer-files
 
-export installer_workspace=./installer-files
+export installer_workspace=$(pwd)/installer-files
+export cred_path=$installer_workspace/.cred
+export info_path=$installer_workspace/.info
+export script_path=$(pwd)/scripts
+
 export rosa_cli_url=https://mirror.openshift.com/pub/openshift-v4/clients/rosa/latest/rosa-linux.tar.gz
 
-SHORT=cn:,cmt:,rep:,r:,mc:,sc:,pc:,hp:,p:,maz:,ver:,s:,f:,rt:,op:,h
-LONG=cluster-name:,compute-machine-type:,replicas:,region:,machine-cidr:,service-cidr:,pod-cidr:,host-prefix:,private:,multi-az:,version:,subnets:,fips:,rosa-token:,operation:,help
+SHORT=cn:,cmt:,rep:,r:,mc:,sc:,pc:,hp:,p:,maz:,ver:,s:,f:,st:,rt:,op:,h
+LONG=cluster-name:,compute-machine-type:,replicas:,region:,machine-cidr:,service-cidr:,pod-cidr:,host-prefix:,private:,multi-az:,version:,subnets:,fips:,storage:,rosa-token:,operation:,help
 OPTS=$(getopt -a -n weather --options $SHORT --longoptions $LONG -- "$@")
 
 eval set -- "$OPTS"
@@ -327,6 +426,10 @@ do
       fips="$2"
       shift 2
       ;;
+    -st | --storage )
+      storage="$2"
+      shift 2
+      ;;
     -rt | --rosa-token )
       rosa_token="$2"
       shift 2
@@ -345,7 +448,7 @@ do
       break
       ;;
     *)
-      echo "Unexpected option: $1"
+      echo "Invalid option: $1"
       ;;
   esac
 done
@@ -367,6 +470,11 @@ case "$operation" in
 "destroy")
     destroy_rosa_cluster
     echo "Cluster is destroyed"
+    ;;
+"storage")
+    identify_subnets
+    configure_storage
+    echo "storage is completed"
     ;;
 *)
     echo "The operation can either create or destroy only"

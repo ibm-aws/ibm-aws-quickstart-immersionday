@@ -120,7 +120,7 @@ function setup_nfs() {
     oc adm policy add-scc-to-user hostmount-anyuid system:serviceaccount:$namespace:nfs-client-provisioner
 
 # Create RBAC
-$(cat <<EOF |oc create -f -
+$(cat <<EOF | oc create -f -
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -322,7 +322,10 @@ done
 validate_cmd_options
 echo "***** all NFS cmd options validation is completed *****"
 
-if [[ $operation == "create" ]]; then
+if [[ $operation == "destroy" ]]; then
+  destroy_efs
+
+elif [[ $operation == "create" ]]; then
   # oc login
   oc_login
 
@@ -350,8 +353,6 @@ if [[ $operation == "create" ]]; then
   echo "info.."$(cat $info_path)
 
   setup_nfs
-elif [[ $operation == "destroy" ]]; then
-  destroy_efs
 else
   echo "Invalid efs storage operation" $operation
 fi

@@ -712,12 +712,224 @@ Resources:
             export OCSIOPS=${OcsIOPS}
             export OCSVOLSIZE=${OcsVolumeSize}
             export OCSVOLTYPE=${OcsVolumeType}
-            
-            wget -P $HOME/ocs/ https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/openshift/config/ocs-prereqs.sh
-            wget -P $HOME/ocs/ https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/openshift/config/1_ocs_olm.yaml
-            wget -P $HOME/ocs/ https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/openshift/config/2_ocs_storagecluster.yaml
-            wget -P $HOME/ocs/ https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/openshift/config/3_ocs_toolbox.yaml
-            wget -P $HOME/ocs/ https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/openshift/config/4_ocs_machineset_template.yaml
+
+            cat <<EOF | tee $HOME/ocs/ocs-prereqs.sh
+            #!/bin/bash
+            OCS_NODES=$(oc get nodes --show-labels | grep node-role.kubernetes.io/worker= |cut -d' ' -f1)
+            for ocsnode in $OCS_NODES[@];do
+              oc label nodes $ocsnode cluster.ocs.openshift.io/openshift-storage=''
+            done
+            EOF
+
+            chmod u+x $HOME/ocs/ocs-prereqs.sh
+
+            #1_ocs_olm.yaml
+            cat <<EOF | tee $HOME/ocs/1_ocs_olm.yaml
+            ---
+            apiVersion: v1
+            kind: Namespace
+            metadata:
+              labels:
+                openshift.io/cluster-monitoring: "true"
+              name: openshift-storage
+            spec: {}
+            ---
+            apiVersion: operators.coreos.com/v1
+            kind: OperatorGroup
+            metadata:
+              name: openshift-storage-operatorgroup
+              namespace: openshift-storage
+            spec:
+              targetNamespaces:
+              - openshift-storage
+            ---
+            apiVersion: operators.coreos.com/v1alpha1
+            kind: Subscription
+            metadata:
+              name: odf-operator
+              namespace: openshift-storage
+              labels:
+                operators.coreos.com/odf-operator.openshift-storage: ''
+            spec:
+              channel: "stable-4.12"
+              installPlanApproval: Automatic
+              name: odf-operator
+              source: redhat-operators
+              sourceNamespace: openshift-marketplace
+            EOF
+
+            #2_ocs_storagecluster.yaml
+            cat <<EOF | tee $HOME/ocs/2_ocs_storagecluster.yaml
+            apiVersion: ocs.openshift.io/v1
+            kind: StorageCluster
+            metadata:
+              annotations:
+                uninstall.ocs.openshift.io/cleanup-policy: delete
+                uninstall.ocs.openshift.io/mode: graceful
+              name: ocs-storagecluster
+              namespace: openshift-storage
+              finalizers:
+                - storagecluster.ocs.openshift.io
+            spec:
+              encryption:
+                enable: true
+              externalStorage: {}
+              managedResources:
+                cephBlockPools: {}
+                cephFilesystems: {}
+                cephObjectStoreUsers: {}
+                cephObjectStores: {}
+              storageDeviceSets:
+                - config: {}
+                  count: 1
+                  dataPVCTemplate:
+                    metadata:
+                      creationTimestamp: null
+                    spec:
+                      accessModes:
+                        - ReadWriteOnce
+                      resources:
+                        requests:
+                          storage: 1Ti
+                      storageClassName: gp3-csi
+                      volumeMode: Block
+                    status: {}
+                  name: ocs-deviceset-gp3
+                  placement: {}
+                  portable: true
+                  replica: 3
+                  resources: {}
+              version: 4.12.0
+            EOF
+
+            #3_ocs_toolbox.yaml
+            cat <<EOF | tee $HOME/ocs/3_ocs_toolbox.yaml
+            apiVersion: apps/v1
+            kind: Deployment
+            metadata:
+              name: rook-ceph-tools
+              namespace: openshift-storage
+              labels:
+                app: rook-ceph-tools
+            spec:
+              replicas: 1
+              selector:
+                matchLabels:
+                  app: rook-ceph-tools
+              template:
+                metadata:
+                  labels:
+                    app: rook-ceph-tools
+                spec:
+                  dnsPolicy: ClusterFirstWithHostNet
+                  containers:
+                  - name: rook-ceph-tools
+                    image: rook/ceph:master
+                    command: ["/tini"]
+                    args: ["-g", "--", "/usr/local/bin/toolbox.sh"]
+                    imagePullPolicy: IfNotPresent
+                    env:
+                      - name: ROOK_CEPH_USERNAME
+                        valueFrom:
+                          secretKeyRef:
+                            name: rook-ceph-mon
+                            key: ceph-username
+                      - name: ROOK_CEPH_SECRET
+                        valueFrom:
+                          secretKeyRef:
+                            name: rook-ceph-mon
+                            key: ceph-secret
+                    volumeMounts:
+                      - mountPath: /etc/ceph
+                        name: ceph-config
+                      - name: mon-endpoint-volume
+                        mountPath: /etc/rook
+                  volumes:
+                    - name: mon-endpoint-volume
+                      configMap:
+                        name: rook-ceph-mon-endpoints
+                        items:
+                        - key: data
+                          path: mon-endpoints
+                    - name: ceph-config
+                      emptyDir: {}
+                  tolerations:
+                    - key: "node.kubernetes.io/unreachable"
+                      operator: "Exists"
+                      effect: "NoExecute"
+                      tolerationSeconds: 5
+            EOF
+
+            #4_ocs_machineset_template.yaml
+            cat <<EOF | tee $HOME/ocs/4_ocs_machineset_template.yaml
+            apiVersion: machine.openshift.io/v1beta1
+            kind: MachineSet
+            metadata:
+              labels:
+                machine.openshift.io/cluster-api-cluster: |CLUSTERID|
+              name: |CLUSTERID|-workerocs-|ZONE|
+              namespace: openshift-machine-api
+            spec:
+              replicas: 1
+              selector:
+                matchLabels:
+                  machine.openshift.io/cluster-api-cluster: |CLUSTERID|
+                  machine.openshift.io/cluster-api-machineset: |CLUSTERID|-workerocs-|ZONE|
+              template:
+                metadata:
+                  labels:
+                    machine.openshift.io/cluster-api-cluster: |CLUSTERID|
+                    machine.openshift.io/cluster-api-machine-role: worker
+                    machine.openshift.io/cluster-api-machine-type: worker
+                    machine.openshift.io/cluster-api-machineset: |CLUSTERID|-workerocs-|ZONE|
+                spec:
+                  taints:
+                  - effect: NoSchedule
+                    key: node.ocs.openshift.io/storage
+                    value: "true"
+                  metadata:
+                    labels:
+                      cluster.ocs.openshift.io/openshift-storage: ""
+                      node-role.kubernetes.io/infra: ""
+                      node-role.kubernetes.io/worker: ""
+                      role: storage-node
+                  providerSpec:
+                    value:
+                      ami:
+                        id: |OCSAMIID|
+                      apiVersion: awsproviderconfig.openshift.io/v1beta1
+                      blockDevices:
+                      - ebs:
+                          encrypted: true
+                          iops: |OCSIOPS|
+                          kmsKey:
+                            arn: |OCSKMSKEYARN|
+                          volumeSize: |OCSVOLSIZE|
+                          volumeType: |OCSVOLTYPE|
+                      credentialsSecret:
+                        name: aws-cloud-credentials
+                      deviceIndex: 0
+                      iamInstanceProfile:
+                        id: |CLUSTERID|-worker-profile
+                      instanceType: |OCSINSTANCETYPE|
+                      kind: AWSMachineProviderConfig
+                      metadata:
+                        creationTimestamp: null
+                      placement:
+                        region: |AWSREGION|
+                      securityGroups:
+                      - filters:
+                        - name: tag:Name
+                          values:
+                          - |CLUSTERID|-worker-sg
+                      subnet:
+                        id: |SUBNET|
+                      tags:
+                      - name: kubernetes.io/cluster/|CLUSTERID|
+                        value: owned
+                      userDataSecret:
+                        name: worker-user-data
+            EOF
 
             echo "Cluster ID $CLUSTERID"
             echo "Availability Zone $AvailabilityZone1}  ${AvailabilityZone2}  ${AvailabilityZone3}"

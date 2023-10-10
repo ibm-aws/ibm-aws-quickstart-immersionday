@@ -3,9 +3,9 @@ set -e
 
 ### command with all arguments
 ##### configure NFS storage
-### ./setup-efs.sh --operation=create --subnets=subnet-5c7d2d610d4db25f,subnet-15bca0698e9b4c41,subnet-3ed7835a97324708
+### ./setup-efs.sh --base-path=/home/ec2-user --operation=create --subnets=subnet-5c7d2d610d4db25f,subnet-15bca0698e9b4c41,subnet-3ed7835a97324708
 ##### destroy NFS storage
-### ./setup-efs.sh --operation=destroy
+### ./setup-efs.sh --base-path=/home/ec2-user --operation=destroy
 
 
 # validate cmd options
@@ -39,6 +39,11 @@ function validate_cmd_options() {
         if [ -z $region ]; then
             echo "region is blank or empty. So, it'll be refer from ec2 metadata"
         fi
+    fi
+
+    # validate base_path
+    if [ -z $base_path ]; then
+        base_path=$(pwd)
     fi
 
     # validate info_path
@@ -222,16 +227,11 @@ function create_service_link_role() {
   aws iam get-role --role-name "AWSServiceRoleForElasticLoadBalancing" || aws iam create-service-linked-role --aws-service-name "elasticloadbalancing.amazonaws.com"
 }
 
-export installer_workspace=$(pwd)/installer-files
-export default_cred_path=$installer_workspace/.cred
-export default_info_path=$installer_workspace/.info
 
-export cpd_cli_version=13.0.3
-export cpd_cli_url=https://github.com/IBM/cpd-cli/releases/download/v$cpd_cli_version/cpd-cli-linux-SE-$cpd_cli_version.tgz
+##### script execution is started from below #####
 
-
-SHORT=s:,curl:,cuser:,cpass:,op:,ip:,r:,h
-LONG=subnets:,cluster-url:,cluster-username:,cluster-password:,operation:,info-path:,region:,help
+SHORT=bp:,s:,curl:,cuser:,cpass:,op:,ip:,r:,h
+LONG=base-path:,subnets:,cluster-url:,cluster-username:,cluster-password:,operation:,info-path:,region:,help
 OPTS=$(getopt -a -n weather --options $SHORT --longoptions $LONG -- "$@")
 
 eval set -- "$OPTS"
@@ -239,6 +239,10 @@ eval set -- "$OPTS"
 while :
 do
   case "$1" in
+    -bp | --base-path )
+      base_path="$2"
+      shift 2
+      ;;
     -ip | --info-path )
       info_path="$2"
       shift 2
@@ -284,6 +288,12 @@ done
 
 validate_cmd_options
 echo "***** all NFS cmd options validation is completed *****"
+
+export installer_workspace=$base_path/installer-files
+export default_cred_path=$installer_workspace/.cred
+export default_info_path=$installer_workspace/.info
+export cpd_cli_version=13.0.3
+export cpd_cli_url=https://github.com/IBM/cpd-cli/releases/download/v$cpd_cli_version/cpd-cli-linux-SE-$cpd_cli_version.tgz
 
 extract_login_cred
 

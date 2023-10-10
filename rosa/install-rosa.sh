@@ -2,9 +2,9 @@
 
 ### command with all arguments
 ##### create cluster
-### nohup ./rosa.sh --operation=create --cluster-name=rosa-d01 --compute-machine-type=m5.4xlarge --replicas=3 --region=us-east-2 --machine-cidr=10.0.0.0/16 --service-cidr=172.30.0.0/16 --pod-cidr=10.128.0.0/14 --host-prefix=23 --private=false --multi-az=true --version=4.12.15 --subnets=subnet-5c7d2d610d4db25f,subnet-15bca0698e9b4c41,subnet-3ed7835a97324708,subnet-68bc9661bea107d1,subnet-5a6043f88f7c2461,subnet-a3646c21243f87f9 --fips=false --rosa-token=eyJhbGciOiJIUIqTFJv3GKs9d8k &
+### nohup ./rosa.sh --base-path=/home/ec2-user --operation=create --cluster-name=rosa-d01 --compute-machine-type=m5.4xlarge --replicas=3 --region=us-east-2 --machine-cidr=10.0.0.0/16 --service-cidr=172.30.0.0/16 --pod-cidr=10.128.0.0/14 --host-prefix=23 --private=false --multi-az=true --version=4.12.15 --subnets=subnet-5c7d2d610d4db25f,subnet-15bca0698e9b4c41,subnet-3ed7835a97324708,subnet-68bc9661bea107d1,subnet-5a6043f88f7c2461,subnet-a3646c21243f87f9 --fips=false --rosa-token=eyJhbGciOiJIUIqTFJv3GKs9d8k &
 ##### destroy cluster
-### nohup ./rosa.sh --operation=destroy --cluster-name=rosa-d01 --region=us-east-2 --rosa-token=eyJhbGciOiJIUIqTFJv3GKs9d8k &
+### nohup ./rosa.sh --base-path=/home/ec2-user --operation=destroy --cluster-name=rosa-d01 --region=us-east-2 --rosa-token=eyJhbGciOiJIUIqTFJv3GKs9d8k &
 
 # validate command line options
 function validate_cmd_options() {
@@ -107,6 +107,11 @@ function validate_cmd_options() {
         echo "version.."$version
         echo "subnets.."$subnets
         echo "fips.."$fips
+    fi
+
+    # validate base_path
+    if [ -z $base_path ]; then
+        base_path=$(pwd)
     fi
 
     # validate cluster_name
@@ -290,17 +295,9 @@ function destroy_rosa_cluster() {
 }
 
 ##### script execution is started from below #####
-# create installer files
-mkdir -p $(pwd)/installer-files
 
-export installer_workspace=$(pwd)/installer-files
-export cred_path=$installer_workspace/.cred
-export info_path=$installer_workspace/.info
-
-export rosa_cli_url=https://mirror.openshift.com/pub/openshift-v4/clients/rosa/latest/rosa-linux.tar.gz
-
-SHORT=cn:,cmt:,rep:,r:,mc:,sc:,pc:,hp:,p:,maz:,ver:,s:,f:,rt:,op:,h
-LONG=cluster-name:,compute-machine-type:,replicas:,region:,machine-cidr:,service-cidr:,pod-cidr:,host-prefix:,private:,multi-az:,version:,subnets:,fips:,rosa-token:,operation:,help
+SHORT=bp:,cn:,cmt:,rep:,r:,mc:,sc:,pc:,hp:,p:,maz:,ver:,s:,f:,rt:,op:,h
+LONG=base-path:,cluster-name:,compute-machine-type:,replicas:,region:,machine-cidr:,service-cidr:,pod-cidr:,host-prefix:,private:,multi-az:,version:,subnets:,fips:,rosa-token:,operation:,help
 OPTS=$(getopt -a -n weather --options $SHORT --longoptions $LONG -- "$@")
 
 eval set -- "$OPTS"
@@ -308,6 +305,10 @@ eval set -- "$OPTS"
 while :
 do
   case "$1" in
+    -bp | --base-path )
+      base_path="$2"
+      shift 2
+      ;;
     -cn | --cluster-name )
       cluster_name="$2"
       shift 2
@@ -384,6 +385,17 @@ do
 done
 
 validate_cmd_options
+
+# create installer files
+mkdir -p $base_path/installer-files
+
+export installer_workspace=$base_path/installer-files
+export cred_path=$installer_workspace/.cred
+export info_path=$installer_workspace/.info
+export rosa_cli_url=https://mirror.openshift.com/pub/openshift-v4/clients/rosa/latest/rosa-linux.tar.gz
+
+
+
 
 # rosa login
 rosa_login

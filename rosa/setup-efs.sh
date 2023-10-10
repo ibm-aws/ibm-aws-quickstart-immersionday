@@ -269,7 +269,7 @@ do
       ;;
 
     -h | --help)
-      "This is a weather script"
+      "This is a setup efs script"
       exit 2
       ;;
     --)

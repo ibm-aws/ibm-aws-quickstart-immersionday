@@ -370,7 +370,7 @@ do
       ;;
 
     -h | --help)
-      "This is a weather script"
+      "This is a install rosa script"
       exit 2
       ;;
     --)

@@ -701,7 +701,7 @@ Resources:
 
 
             # copy openshift and CP4D config file to config dir
-            wget https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/config/cp4d-471.yaml
+            wget https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/config/cp4d-473.yaml
             cp ./cp4d-471.yaml $HOME/cpd-config/config/
 
             # replace parameters in CPD

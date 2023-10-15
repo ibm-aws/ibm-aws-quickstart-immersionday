@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 ### command with all arguments
 ##### configure NFS storage
@@ -73,7 +72,7 @@ function download_binaries() {
     sudo yum install -y podman jq gettext
 
     # download cpd-cli
-    wget -r -l1 -np -nd -q $cpd_cli_url -P $installer_workspace
+    wget -r -l1 -nd -q $cpd_cli_url -P $installer_workspace
     tar -xvzf $installer_workspace/cpd-cli-linux-SE-$cpd_cli_version.tgz -C $installer_workspace/
     sudo cp -r $installer_workspace/cpd-cli-linux-SE-13.0.3-40/* /usr/local/bin/
     sudo cp -r $installer_workspace/cpd-cli-linux-SE-13.0.3-40/* /usr/bin/
@@ -114,20 +113,37 @@ function extract_login_cred() {
 }
 
 # oc login
+ocloginmaxcounter=5
+oclogincounter=0
+ocloginfailed=false
 function oc_login() {
-    oc login $cluster_url --username $cluster_username --password $cluster_password --insecure-skip-tls-verify
-    if [ $? == 0 ]; then
-        echo "oc login successfully!!"
-    else
-        echo "oc login failed!!"
-        exit 1;
-    fi
+    echo "oc login $cluster_url --username=$cluster_username --password=$cluster_password --insecure-skip-tls-verify"
+    oc login $cluster_url --username=$cluster_username --password=$cluster_password --insecure-skip-tls-verify
 
-    echo "***** OC login is successful *****"
+    if [ $? == 0 ]; then
+        echo "***** OC login is successful *****"
+        ocloginfailed=false
+    else
+      while [ $oclogincounter -lt $oclogincounter ];
+      do
+          echo "oc login failed..!!$oclogincounter"
+          sleep 30
+          oc_login
+          ocloginfailed=true
+          ((oclogincounter++))
+      done
+    fi
+   
+    echo "ocloginfailed..$ocloginfailed"
+    if $ocloginfailed; then
+      echo "***** OC login is failed after $ocloginmaxcounter attempt *****"
+      exit 1;
+    fi
 }
 
 # cpd-cli-login
 function cpd_cli_login() {
+  echo "cluster_username..$cluster_username, cluster_password..$cluster_password, cluster_url..$cluster_url"
   cpd-cli manage login-to-ocp --username=$cluster_username --password=$cluster_password --server=$cluster_url
   echo "***** cpd-cli login is successful *****"
 }
@@ -161,6 +177,7 @@ function create_efs() {
 
 # create EFS mountpoint
 function create_efs_mountpoints() {
+    echo "efs_mountpoint_subnets..$subnets"
     IFS=, read -ra subents_arr <<< "$subnets"
     mnt=""
     for sa in ${subents_arr[@]}; do 
@@ -210,6 +227,7 @@ function destroy_efs() {
   storage=$(cat "$info_path" | grep -oE -- 'storage ([^ ]+)' | cut -d' ' -f2)
   efs_filesystem_id=$(cat "$info_path" | grep -oE -- 'efs_filesystem_id ([^ ]+)' | cut -d' ' -f2)
   efs_mount_points=$(cat "$info_path" | grep -oE -- 'efs_mount_points ([^ ]+)' | cut -d' ' -f2)
+  echo "storage..$storage, efs_filesystem_id..$efs_filesystem_id, efs_mount_points..$efs_mount_points"
 
   IFS=, read -ra emp_arr <<< "$efs_mount_points"
   for e in ${emp_arr[@]}; do 
@@ -225,6 +243,7 @@ function destroy_efs() {
 # load balancing IAM service link role
 function create_service_link_role() {
   aws iam get-role --role-name "AWSServiceRoleForElasticLoadBalancing" || aws iam create-service-linked-role --aws-service-name "elasticloadbalancing.amazonaws.com"
+  echo "***** create_service_link_role is completed *****"
 }
 
 
@@ -286,27 +305,29 @@ do
   esac
 done
 
-validate_cmd_options
-echo "***** all NFS cmd options validation is completed *****"
-
 export installer_workspace=$base_path/installer-files
 export default_cred_path=$installer_workspace/.cred
 export default_info_path=$installer_workspace/.info
 export cpd_cli_version=13.0.3
 export cpd_cli_url=https://github.com/IBM/cpd-cli/releases/download/v$cpd_cli_version/cpd-cli-linux-SE-$cpd_cli_version.tgz
 
+validate_cmd_options
+echo "***** all NFS cmd options validation is completed *****"
+
 extract_login_cred
 
 # oc login
 oc_login
 
-#cpd-cli login
-cpd_cli_login
-
-if [[ $operation == "destroy" ]]; then
+if [ $operation == "destroy" ]; then
   destroy_efs
 
-elif [[ $operation == "create" ]]; then
+elif [ $operation == "create" ]; then
+  #download binaries
+  download_binaries
+
+  #cpd-cli login
+  cpd_cli_login
 
   # create service link role
   create_service_link_role

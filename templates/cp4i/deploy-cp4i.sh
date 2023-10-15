@@ -162,6 +162,7 @@ function validate_cmd_options() {
 
 # extract_login_cred
 function extract_login_cred() {
+    echo "cred_path..$cred_path"
     credfile=$(cat $cred_path)
     
     # read cluster_url from .cred
@@ -261,13 +262,13 @@ do
   esac
 done
 
-
-validate_cmd_options
-echo "***** all cp4i cmd options validation is completed *****"
-
 export installer_workspace=$base_path/installer-files
 export default_cred_path=$installer_workspace/.cred
 export default_info_path=$installer_workspace/.info
+
+
+validate_cmd_options
+echo "***** all cp4i cmd options validation is completed *****"
 
 PN_CASE_VERSION="1.7.10"
 PN_CATALOG_IMAGE="icr.io/cpopen/ibm-integration-platform-navigator-catalog@sha256:3435a5d0e2375d0524bd3baaa0dad772280efe6cacc13665ac8b2760ad3ebb35"

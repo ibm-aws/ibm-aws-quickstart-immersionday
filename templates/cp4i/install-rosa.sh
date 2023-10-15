@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 ### command with all arguments
 ##### create cluster
@@ -79,7 +80,7 @@ function validate_cmd_options() {
         # validate subnets
         if [ -z $subnets ]; then
             echo "subnets cannot be blank or empty"
-            echo "Please maintain subents logical orders with separated comma(,). All private subnets first followed by public subents"
+            echo "Please maintain subents logical orders separated with comma(,). All private subnets first followed by public subents"
             echo "i.e. private-subnet-zone-a,private-subnet-zone-b,private-subnet-zone-c,public-subent-zone-a,public-subent-zone-b,public-subent-zone-c"
             exit 1;
         fi
@@ -96,6 +97,7 @@ function validate_cmd_options() {
             ;;
         esac
 
+        echo "base_path.."$base_path
         echo "compute_machine_type.."$compute_machine_type
         echo "replicas.."$replicas
         echo "machine_cidr.."$machine_cidr
@@ -169,13 +171,13 @@ function identify_subnets() {
 
 # download rosa and openshift cli utility
 function download_binaries() {
-    wget -r -l1 -np -nd -q $rosa_cli_url -P $installer_workspace
+    wget -r -l1 -nd -q $rosa_cli_url -P $installer_workspace
     tar -xvzf $installer_workspace/rosa-linux.tar.gz -C $installer_workspace/
     chmod u+x $installer_workspace/rosa
 
     wget "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${version}/openshift-client-linux-${version}.tar.gz"
     mv openshift-client-linux-${version}.tar.gz $installer_workspace/openshift-client-linux-${version}.tar.gz
-    tar -xvf $installer_workspace/openshift-client-linux-${version}.tar.gz $installer_workspace/
+    tar -xvzf $installer_workspace/openshift-client-linux-${version}.tar.gz -C $installer_workspace/
             
     sudo chmod u+x $installer_workspace/oc $installer_workspace/kubectl
     sudo mv $installer_workspace/oc /usr/local/bin
@@ -207,12 +209,14 @@ function setup_environment() {
 
 # rosa login
 function rosa_login() {
+    echo "installer_workspace..$installer_workspace"
+    echo "rosa_token..$rosa_token"
     $installer_workspace/rosa login --token=$rosa_token
-    if [ $? == 0 ]; then
-        echo "rosa login successfully!!"
-    else
+    if [ $? -gt 0 ]; then
         echo "rosa login failed!!"
         exit 1;
+    else
+        echo "rosa login successfully!!"
     fi
 }
 
@@ -259,7 +263,6 @@ function install_rosa_cluster() {
         $installer_workspace/rosa create admin --cluster=$cluster_name > $cred_path
         ecode=$?
         echo "***** rosa cluster admin user is created *****"
-        sleep 300
     else
         echo "Failed to create rosa cluster"
     fi
@@ -272,6 +275,7 @@ function install_rosa_cluster() {
 
 # Destroy rosa cluster
 function destroy_rosa_cluster() {
+    echo "installer_workspace..$installer_workspace, cluster_name..$cluster_name"
     cluster_id=$($installer_workspace/rosa describe cluster --cluster=$cluster_name -o json | jq --raw-output .id)
     ecode=$?
     echo "cluster_id.."$cluster_id
@@ -394,19 +398,18 @@ export cred_path=$installer_workspace/.cred
 export info_path=$installer_workspace/.info
 export rosa_cli_url=https://mirror.openshift.com/pub/openshift-v4/clients/rosa/latest/rosa-linux.tar.gz
 
-
-
-
-# rosa login
-rosa_login
-
 # install rosa cluster
 case "$operation" in
 "create")
     setup_environment
+    # rosa login
+    rosa_login
+
     install_rosa_cluster
     ;;
 "destroy")
+    # rosa login
+    rosa_login
     destroy_rosa_cluster
     ;;
 *)

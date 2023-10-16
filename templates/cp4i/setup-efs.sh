@@ -224,6 +224,7 @@ function setup_nfs() {
 
 # destroy EFS
 function destroy_efs() {
+  echo "***** Destroying EFS storage *****"
   storage=$(cat "$info_path" | grep -oE -- 'storage ([^ ]+)' | cut -d' ' -f2)
   efs_filesystem_id=$(cat "$info_path" | grep -oE -- 'efs_filesystem_id ([^ ]+)' | cut -d' ' -f2)
   efs_mount_points=$(cat "$info_path" | grep -oE -- 'efs_mount_points ([^ ]+)' | cut -d' ' -f2)
@@ -233,11 +234,10 @@ function destroy_efs() {
   for e in ${emp_arr[@]}; do 
     aws efs delete-mount-target --mount-target-id $e || true
   done
-
   sleep 60
-
   aws efs delete-file-system --file-system-id $efs_filesystem_id
-  echo "***** efs file system $efs_filesystem_id is destroyed *****"
+  echo "efs file system $efs_filesystem_id is destroyed"
+  echo "***** Destroyed EFS storage *****"
 } 
 
 # load balancing IAM service link role

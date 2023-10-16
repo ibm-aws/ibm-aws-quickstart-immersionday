@@ -67,31 +67,31 @@ Parameters:
   VPCID:
     Description: The ID of your existing VPC for deployment.
     Type: AWS::EC2::VPC::Id
-    Default: vpc-03738f32953df603f
+    Default: vpc-38f32953df603f
   PrivateSubnet1ID:
     Description: The ID of the private subnet in Availability Zone a for the workload (e.g., subnet-a0246dcd).
     Type: String
-    Default: "subnet-05c7d2d610d4db25f"
+    Default: "subnet-7d2d610d4db25f"
   PrivateSubnet2ID:
     Description: The ID of the private subnet in Availability Zone b for the workload (e.g., subnet-b1f432cd).
     Type: String
-    Default: "subnet-015bca0698e9b4c41"
+    Default: "subnet-bca0698e9b4c41"
   PrivateSubnet3ID:
     Description: The ID of the private subnet in Availability Zone c for the workload (e.g., subnet-b1f4a2cd).
     Type: String
-    Default: "subnet-03ed7835a97324708"
+    Default: "subnet-d7835a97324708"
   PublicSubnet1ID:
     Description: The ID of the public subnet in Availability Zone a for the ELB load balancer (e.g., subnet-9bc642ac).
     Type: String
-    Default: "subnet-068bc9661bea107d1"
+    Default: "subnet-bc9661bea107d1"
   PublicSubnet2ID:
     Description: The ID of the public subnet in Availability Zone b for the ELB load balancer (e.g., subnet-e3246d8e).
     Type: String
-    Default: "subnet-05a6043f88f7c2461"
+    Default: "subnet-6043f88f7c2461"
   PublicSubnet3ID:
     Description: The ID of the public subnet in Availability Zone c for the ELB load balancer (e.g., subnet-e324ad8e).
     Type: String
-    Default: "subnet-0a3646c21243f87f9"
+    Default: "subnet-646c21243f87f9"
   KeyPairName:
     Description: The name of an existing public/private key pair, which allows you
       to securely connect to your instance after it launches.
@@ -431,16 +431,16 @@ Resources:
             /home/ec2-user/destroy.sh:
               content: !Sub |
                 echo "StackName $1, ClusterName $2, Region $3, RosaToken $4"
+                export HOME=/home/ec2-user
                 cd /home/ec2-user
-                ./setup-efs.sh --base-path=/home/ec2-user --operation=destroy | tee /home/ec2-user/destroy.log
+                ./setup-efs.sh --base-path=/home/ec2-user --operation=destroy >> /home/ec2-user/destroy.log
                 ./install-rosa.sh --base-path=/home/ec2-user \
                   --operation=destroy \
                   --cluster-name=$2 \
                   --region=$3 \
-                  --rosa-token=$4 | tee /home/ec2-user/destroy.log
+                  --rosa-token=$4 >> /home/ec2-user/destroy.log
                 aws ssm put-parameter --name $1"_CleanupStatus" --type "String" --value "READY" --overwrite
-                sleep 300
-              mode: '000777'
+              mode: '000755'
               owner: root
               group: root
             /root/.aws/config:

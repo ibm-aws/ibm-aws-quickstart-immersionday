@@ -211,7 +211,7 @@ function setup_environment() {
 function rosa_login() {
     echo "installer_workspace..$installer_workspace"
     echo "rosa_token..$rosa_token"
-    $installer_workspace/rosa login --token $rosa_token
+    $installer_workspace/rosa login --token=$rosa_token
     if [ $? -gt 0 ]; then
         echo "rosa login failed!!"
         exit 1;
@@ -239,7 +239,7 @@ function install_rosa_cluster() {
 
     # create rosa account IAM roles
     if [ $ecode == 0 ]; then
-        $installer_workspace/rosa create account-roles --mode auto --yes --version $rosa_major_minor_version && $installer_workspace/rosa create oidc-config --yes --output json  --mode auto
+        $installer_workspace/rosa create cluster $private_link --cluster-name=$cluster_name --compute-machine-type=$compute_machine_type --replicas $replicas --region $region --machine-cidr=$machine_cidr --service-cidr=$service_cidr --pod-cidr=$pod_cidr --host-prefix=$host_prefix --private=$private --multi-az=$multi_az --version=$version --subnet-ids=$rosa_subnets --fips=$fips --watch --yes --sts --mode auto && $installer_workspace/rosa logs install --cluster=$cluster_name --watch
         ecode=$?
         echo "***** rosa account role is created *****"
     else
@@ -259,8 +259,8 @@ function install_rosa_cluster() {
     fi
 
     if [ $ecode == 0 ]; then
-        $installer_workspace/rosa describe cluster --cluster $cluster_name
-        $installer_workspace/rosa create admin --cluster $cluster_name > $cred_path
+        $installer_workspace/rosa describe cluster --cluster=$cluster_name
+        $installer_workspace/rosa create admin --cluster=$cluster_name > $cred_path
         ecode=$?
         echo "***** rosa cluster admin user is created *****"
     else
@@ -277,13 +277,13 @@ function install_rosa_cluster() {
 function destroy_rosa_cluster() {
     echo "***** Destroying the ROSA clsuter *****"
     echo "installer_workspace..$installer_workspace, cluster_name..$cluster_name"
-    cluster_id=$("$installer_workspace"/rosa describe cluster --cluster "$cluster_name" -o json | jq --raw-output .id)
+    cluster_id=$($installer_workspace/rosa describe cluster --cluster=$cluster_name -o json | jq --raw-output .id)
     ecode=$?
     echo "cluster_id.."$cluster_id
 
     # get cluster id
     if [ $ecode == 0 ]; then
-        $installer_workspace/rosa delete cluster --cluster $cluster_name --yes 
+        $installer_workspace/rosa delete cluster --cluster=$cluster_name --yes && $installer_workspace/rosa logs uninstall -c $cluster_name --watch
         echo "***** Cluster is destroyed *****"
         $installer_workspace/rosa delete operator-roles -c $cluster_id --mode auto --yes 
         echo "***** Cluster operator roles are destroyed *****"

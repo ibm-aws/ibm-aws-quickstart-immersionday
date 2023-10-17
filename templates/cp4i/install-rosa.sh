@@ -239,7 +239,8 @@ function install_rosa_cluster() {
 
     # create rosa account IAM roles
     if [ $ecode == 0 ]; then
-        $installer_workspace/rosa create cluster $private_link --cluster-name=$cluster_name --compute-machine-type=$compute_machine_type --replicas $replicas --region $region --machine-cidr=$machine_cidr --service-cidr=$service_cidr --pod-cidr=$pod_cidr --host-prefix=$host_prefix --private=$private --multi-az=$multi_az --version=$version --subnet-ids=$rosa_subnets --fips=$fips --watch --yes --sts --mode auto && $installer_workspace/rosa logs install --cluster=$cluster_name --watch
+        $installer_workspace/rosa create account-roles --mode auto --yes --version $rosa_major_minor_version \
+        && $installer_workspace/rosa create oidc-config --yes --output json  --mode auto
         ecode=$?
         echo "***** rosa account role is created *****"
     else
@@ -250,7 +251,10 @@ function install_rosa_cluster() {
     # install rosa cluster
     if [ $ecode == 0 ]; then
         echo "Triggering cluster creation...."
-        $installer_workspace/rosa create cluster $private_link --cluster-name $cluster_name --compute-machine-type $compute_machine_type --replicas $replicas --region $region --machine-cidr $machine_cidr --service-cidr $service_cidr --pod-cidr $pod_cidr --host-prefix $host_prefix --private $private --multi-az $multi_az --version $version --subnet-ids $rosa_subnets  --fips $fips --watch --yes --sts --mode auto && $installer_workspace/rosa logs install --cluster=$cluster_name --watch
+        $installer_workspace/rosa create cluster $private_link --cluster-name=$cluster_name --compute-machine-type=$compute_machine_type --replicas=$replicas \
+         --region=$region --machine-cidr=$machine_cidr --service-cidr=$service_cidr --pod-cidr=$pod_cidr \
+         --host-prefix=$host_prefix --private=$private --multi-az=$multi_az --version=$version --subnet-ids=$rosa_subnets \
+         --fips=$fips --watch --yes --sts --mode auto && $installer_workspace/rosa logs install --cluster=$cluster_name --watch
         ecode=$?
         echo "***** rosa cluster is created *****"
     else

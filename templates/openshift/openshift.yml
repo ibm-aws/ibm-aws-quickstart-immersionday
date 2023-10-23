@@ -28,8 +28,9 @@ Metadata:
           - WorkerVolumeType
           - WorkerCount
       - Label: 
-          default: OCS/ODF Storage configuration
+          default: Storage configuration
         Parameters:
+          - StorageType
           - OcsInstanceType
           - OcsIOPS
           - OcsVolumeSize
@@ -124,8 +125,9 @@ Parameters:
       - io1
       - io2
   WorkerInstanceType:
-    Default: m5.4xlarge
+    Default: m5.2xlarge
     AllowedValues:
+      - m5.2xlarge
       - m5.4xlarge
       - m5.8xlarge
       - m5.12xlarge
@@ -170,11 +172,19 @@ Parameters:
     Default: '3'
     Description: The desired capacity for the OpenShift worker. Minimum of 3 nodes required. If the number of worker instances exceeds your Red Hat entitlement limits or AWS instance limits, the stack will fail. Choose a number that is within your limits.
     Type: Number
-  OcsInstanceType:
-    Description: The EC2 instance type for the OCS/ODF cluster instances.
-    Default: m5.4xlarge
+  StorageType:
+    Description: Storage need to be configured on openshift
+    Default: NA
     Type: String
     AllowedValues:
+      - NA
+      - OCS
+  OcsInstanceType:
+    Description: The EC2 instance type for the OCS/ODF cluster instances.
+    Default: m5.2xlarge
+    Type: String
+    AllowedValues:
+      - m5.2xlarge
       - m5.4xlarge
       - m5.8xlarge
       - m5.12xlarge
@@ -700,99 +710,106 @@ Resources:
 
             openshift-install create cluster --log-level=debug
             chown -R ec2-user:ec2-user $HOME/installer
+            ecode=$?
 
 
             ## OCS
-            mkdir -p $HOME/ocs
+            if [ "${StorageType}" == "OCS" ]; then
+              mkdir -p $HOME/ocs
 
-            export KUBECONFIG=$HOME/installer/auth/kubeconfig
-            export CLUSTERID=$(oc get machineset -n openshift-machine-api -o jsonpath='{.items[0].metadata.labels.machine\.openshift\.io/cluster-api-cluster}')
-            export OCSKMSKEYARN="${OCSKMSKeyArn}"
-            export OCSINSTANCETYPE=${OcsInstanceType}
-            export OCSIOPS=${OcsIOPS}
-            export OCSVOLSIZE=${OcsVolumeSize}
-            export OCSVOLTYPE=${OcsVolumeType}
+              export KUBECONFIG=$HOME/installer/auth/kubeconfig
+              export CLUSTERID=$(oc get machineset -n openshift-machine-api -o jsonpath='{.items[0].metadata.labels.machine\.openshift\.io/cluster-api-cluster}')
+              export OCSKMSKEYARN="${OCSKMSKeyArn}"
+              export OCSINSTANCETYPE=${OcsInstanceType}
+              export OCSIOPS=${OcsIOPS}
+              export OCSVOLSIZE=${OcsVolumeSize}
+              export OCSVOLTYPE=${OcsVolumeType}
 
-            wget -P $HOME/ocs/ https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/openshift/openshift_config.zip
-            unzip $HOME/ocs/openshift_config.zip -d $HOME/ocs/
-            chmod u+x $HOME/ocs/ocs-prereqs.sh
+              wget -P $HOME/ocs/ https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/openshift/openshift_config.zip
+              unzip $HOME/ocs/openshift_config.zip -d $HOME/ocs/
+              chmod u+x $HOME/ocs/ocs-prereqs.sh
 
-            echo "Cluster ID $CLUSTERID"
-            echo "Availability Zone $AvailabilityZone1}  ${AvailabilityZone2}  ${AvailabilityZone3}"
-            echo "OCSAMIID  ${OCSAMIID}"
-            echo "OCSIOPS  $OCSIOPS"
-            echo "OCSVOLSIZE $OCSVOLSIZE"
-            echo "OCSVOLTYPE $OCSVOLTYPE"
-            echo "OCSINSTANCETYPE  $OCSINSTANCETYPE"
-            echo "Private Subnets ${PrivateSubnet1ID} ${PrivateSubnet2ID} ${PrivateSubnet3ID}"
-            echo "OCSKMSKeyArn ${OCSKMSKeyArn}"
+              echo "Cluster ID $CLUSTERID"
+              echo "Availability Zone $AvailabilityZone1}  ${AvailabilityZone2}  ${AvailabilityZone3}"
+              echo "OCSAMIID  ${OCSAMIID}"
+              echo "OCSIOPS  $OCSIOPS"
+              echo "OCSVOLSIZE $OCSVOLSIZE"
+              echo "OCSVOLTYPE $OCSVOLTYPE"
+              echo "OCSINSTANCETYPE  $OCSINSTANCETYPE"
+              echo "Private Subnets ${PrivateSubnet1ID} ${PrivateSubnet2ID} ${PrivateSubnet3ID}"
+              echo "OCSKMSKeyArn ${OCSKMSKeyArn}"
 
-            echo "Creating machinesets"
-            cp $HOME/ocs/4_ocs_machineset_template.yaml $HOME/ocs/ocs_a.yaml
-            sed -i 's/|CLUSTERID|/'$CLUSTERID'/g' $HOME/ocs/ocs_a.yaml
-            sed -i 's/|ZONE|/'${AvailabilityZone1}'/g' $HOME/ocs/ocs_a.yaml
-            sed -i 's/|OCSAMIID|/'${OCSAMIID}'/g' $HOME/ocs/ocs_a.yaml
-            sed -i 's/|OCSIOPS|/'$OCSIOPS'/g' $HOME/ocs/ocs_a.yaml
-            sed -i 's/|OCSVOLSIZE|/'$OCSVOLSIZE'/g' $HOME/ocs/ocs_a.yaml
-            sed -i 's/|OCSVOLTYPE|/'$OCSVOLTYPE'/g' $HOME/ocs/ocs_a.yaml
-            sed -i 's/|OCSINSTANCETYPE|/'$OCSINSTANCETYPE'/g' $HOME/ocs/ocs_a.yaml
-            sed -i 's/|AWSREGION|/'${AWS::Region}'/g' $HOME/ocs/ocs_a.yaml
-            sed -i 's/|SUBNET|/'${PrivateSubnet1ID}'/g' $HOME/ocs/ocs_a.yaml
-            sed -i 's#|OCSKMSKEYARN|#'${OCSKMSKeyArn}'#g' $HOME/ocs/ocs_a.yaml 
-            oc create -f $HOME/ocs/ocs_a.yaml
+              echo "Creating machinesets"
+              cp $HOME/ocs/4_ocs_machineset_template.yaml $HOME/ocs/ocs_a.yaml
+              sed -i 's/|CLUSTERID|/'$CLUSTERID'/g' $HOME/ocs/ocs_a.yaml
+              sed -i 's/|ZONE|/'${AvailabilityZone1}'/g' $HOME/ocs/ocs_a.yaml
+              sed -i 's/|OCSAMIID|/'${OCSAMIID}'/g' $HOME/ocs/ocs_a.yaml
+              sed -i 's/|OCSIOPS|/'$OCSIOPS'/g' $HOME/ocs/ocs_a.yaml
+              sed -i 's/|OCSVOLSIZE|/'$OCSVOLSIZE'/g' $HOME/ocs/ocs_a.yaml
+              sed -i 's/|OCSVOLTYPE|/'$OCSVOLTYPE'/g' $HOME/ocs/ocs_a.yaml
+              sed -i 's/|OCSINSTANCETYPE|/'$OCSINSTANCETYPE'/g' $HOME/ocs/ocs_a.yaml
+              sed -i 's/|AWSREGION|/'${AWS::Region}'/g' $HOME/ocs/ocs_a.yaml
+              sed -i 's/|SUBNET|/'${PrivateSubnet1ID}'/g' $HOME/ocs/ocs_a.yaml
+              sed -i 's#|OCSKMSKEYARN|#'${OCSKMSKeyArn}'#g' $HOME/ocs/ocs_a.yaml 
+              oc create -f $HOME/ocs/ocs_a.yaml
 
-            
-            if [ "${MultiAZ}" == "True" ]; then
-              cp $HOME/ocs/4_ocs_machineset_template.yaml $HOME/ocs/ocs_b.yaml
-              sed -i 's/|CLUSTERID|/'$CLUSTERID'/g' $HOME/ocs/ocs_b.yaml
-              sed -i 's/|ZONE|/'${AvailabilityZone2}'/g' $HOME/ocs/ocs_b.yaml
-              sed -i 's/|OCSAMIID|/'${OCSAMIID}'/g' $HOME/ocs/ocs_b.yaml
-              sed -i 's/|OCSIOPS|/'$OCSIOPS'/g' $HOME/ocs/ocs_b.yaml
-              sed -i 's/|OCSVOLSIZE|/'$OCSVOLSIZE'/g' $HOME/ocs/ocs_b.yaml
-              sed -i 's/|OCSVOLTYPE|/'$OCSVOLTYPE'/g' $HOME/ocs/ocs_b.yaml
-              sed -i 's/|OCSINSTANCETYPE|/'$OCSINSTANCETYPE'/g' $HOME/ocs/ocs_b.yaml
-              sed -i 's/|AWSREGION|/'${AWS::Region}'/g' $HOME/ocs/ocs_b.yaml
-              sed -i 's/|SUBNET|/'${PrivateSubnet2ID}'/g' $HOME/ocs/ocs_b.yaml
-              sed -i 's#|OCSKMSKEYARN|#'${OCSKMSKeyArn}'#g' $HOME/ocs/ocs_b.yaml
-              oc create -f $HOME/ocs/ocs_b.yaml
+              
+              if [ "${MultiAZ}" == "True" ]; then
+                cp $HOME/ocs/4_ocs_machineset_template.yaml $HOME/ocs/ocs_b.yaml
+                sed -i 's/|CLUSTERID|/'$CLUSTERID'/g' $HOME/ocs/ocs_b.yaml
+                sed -i 's/|ZONE|/'${AvailabilityZone2}'/g' $HOME/ocs/ocs_b.yaml
+                sed -i 's/|OCSAMIID|/'${OCSAMIID}'/g' $HOME/ocs/ocs_b.yaml
+                sed -i 's/|OCSIOPS|/'$OCSIOPS'/g' $HOME/ocs/ocs_b.yaml
+                sed -i 's/|OCSVOLSIZE|/'$OCSVOLSIZE'/g' $HOME/ocs/ocs_b.yaml
+                sed -i 's/|OCSVOLTYPE|/'$OCSVOLTYPE'/g' $HOME/ocs/ocs_b.yaml
+                sed -i 's/|OCSINSTANCETYPE|/'$OCSINSTANCETYPE'/g' $HOME/ocs/ocs_b.yaml
+                sed -i 's/|AWSREGION|/'${AWS::Region}'/g' $HOME/ocs/ocs_b.yaml
+                sed -i 's/|SUBNET|/'${PrivateSubnet2ID}'/g' $HOME/ocs/ocs_b.yaml
+                sed -i 's#|OCSKMSKEYARN|#'${OCSKMSKeyArn}'#g' $HOME/ocs/ocs_b.yaml
+                oc create -f $HOME/ocs/ocs_b.yaml
+                ecode=$?
 
-              cp $HOME/ocs/4_ocs_machineset_template.yaml $HOME/ocs/ocs_c.yaml
-              sed -i 's/|CLUSTERID|/'$CLUSTERID'/g' $HOME/ocs/ocs_c.yaml
-              sed -i 's/|ZONE|/'${AvailabilityZone3}'/g' $HOME/ocs/ocs_c.yaml
-              sed -i 's/|OCSAMIID|/'${OCSAMIID}'/g' $HOME/ocs/ocs_c.yaml
-              sed -i 's/|OCSIOPS|/'$OCSIOPS'/g' $HOME/ocs/ocs_c.yaml
-              sed -i 's/|OCSVOLSIZE|/'$OCSVOLSIZE'/g' $HOME/ocs/ocs_c.yaml
-              sed -i 's/|OCSVOLTYPE|/'$OCSVOLTYPE'/g' $HOME/ocs/ocs_c.yaml
-              sed -i 's/|OCSINSTANCETYPE|/'$OCSINSTANCETYPE'/g' $HOME/ocs/ocs_c.yaml
-              sed -i 's/|AWSREGION|/'${AWS::Region}'/g' $HOME/ocs/ocs_c.yaml
-              sed -i 's/|SUBNET|/'${PrivateSubnet3ID}'/g' $HOME/ocs/ocs_c.yaml
-              sed -i 's#|OCSKMSKEYARN|#'${OCSKMSKeyArn}'#g' $HOME/ocs/ocs_c.yaml
-              oc create -f $HOME/ocs/ocs_c.yaml
+                cp $HOME/ocs/4_ocs_machineset_template.yaml $HOME/ocs/ocs_c.yaml
+                sed -i 's/|CLUSTERID|/'$CLUSTERID'/g' $HOME/ocs/ocs_c.yaml
+                sed -i 's/|ZONE|/'${AvailabilityZone3}'/g' $HOME/ocs/ocs_c.yaml
+                sed -i 's/|OCSAMIID|/'${OCSAMIID}'/g' $HOME/ocs/ocs_c.yaml
+                sed -i 's/|OCSIOPS|/'$OCSIOPS'/g' $HOME/ocs/ocs_c.yaml
+                sed -i 's/|OCSVOLSIZE|/'$OCSVOLSIZE'/g' $HOME/ocs/ocs_c.yaml
+                sed -i 's/|OCSVOLTYPE|/'$OCSVOLTYPE'/g' $HOME/ocs/ocs_c.yaml
+                sed -i 's/|OCSINSTANCETYPE|/'$OCSINSTANCETYPE'/g' $HOME/ocs/ocs_c.yaml
+                sed -i 's/|AWSREGION|/'${AWS::Region}'/g' $HOME/ocs/ocs_c.yaml
+                sed -i 's/|SUBNET|/'${PrivateSubnet3ID}'/g' $HOME/ocs/ocs_c.yaml
+                sed -i 's#|OCSKMSKEYARN|#'${OCSKMSKeyArn}'#g' $HOME/ocs/ocs_c.yaml
+                oc create -f $HOME/ocs/ocs_c.yaml
+              fi
+
+              echo "Sleeping for 5 mins to get change reflect"
+              sleep 300
+
+              /bin/bash $HOME/ocs/ocs-prereqs.sh
+              ecode=$?
+              
+              echo "Creating OCS OLM"
+              oc create -f $HOME/ocs/1_ocs_olm.yaml
+              ecode=$?
+              echo "Sleeping for 5 mins to get change reflect"
+              sleep 300
+
+              echo "Creating OCS Storage cluster"
+              oc create -f $HOME/ocs/2_ocs_storagecluster.yaml
+              ecode=$?
+              echo "Sleeping for 5 mins to get change reflect"
+              sleep 300
+
+              echo "Creating OCS toolbox"
+              oc create -f $HOME/ocs/3_ocs_toolbox.yaml
+              ecode=$?
+              echo "Sleeping for 5 mins to get change reflect"
+              sleep 300
+
+              oc get pods -n openshift-storage
+              chown -R ec2-user:ec2-user $HOME/ocs
             fi
-
-            echo "Sleeping for 5 mins to get change reflect"
-            sleep 300
-
-            /bin/bash $HOME/ocs/ocs-prereqs.sh
-            
-            echo "Creating OCS OLM"
-            oc create -f $HOME/ocs/1_ocs_olm.yaml
-            echo "Sleeping for 5 mins to get change reflect"
-            sleep 300
-
-            echo "Creating OCS Storage cluster"
-            oc create -f $HOME/ocs/2_ocs_storagecluster.yaml
-            echo "Sleeping for 5 mins to get change reflect"
-            sleep 300
-
-            echo "Creating OCS toolbox"
-            oc create -f $HOME/ocs/3_ocs_toolbox.yaml
-            echo "Sleeping for 5 mins to get change reflect"
-            sleep 300
-
-            oc get pods -n openshift-storage
-
-            ecode=$?
             /usr/local/bin/cfn-signal --exit-code $ecode --id $AWS_STACKID  --data "See logs at $HOME/cpd-status/log/" $ICPDInstallationCompletedURL
           -
             MultiAZ: !If [ 3AZCondition , 'True', 'False']

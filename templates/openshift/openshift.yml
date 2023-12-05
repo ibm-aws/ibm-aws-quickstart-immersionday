@@ -711,7 +711,7 @@ Resources:
             openshift-install create cluster --log-level=debug
             chown -R ec2-user:ec2-user $HOME/installer
             ecode=$?
-
+            echo "Storage type ${StorageType}"
 
             ## OCS
             if [ "${StorageType}" == "OCS" ]; then
@@ -730,7 +730,7 @@ Resources:
               chmod u+x $HOME/ocs/ocs-prereqs.sh
 
               echo "Cluster ID $CLUSTERID"
-              echo "Availability Zone $AvailabilityZone1}  ${AvailabilityZone2}  ${AvailabilityZone3}"
+              echo "Availability Zone ${AvailabilityZone1}  ${AvailabilityZone2}  ${AvailabilityZone3}"
               echo "OCSAMIID  ${OCSAMIID}"
               echo "OCSIOPS  $OCSIOPS"
               echo "OCSVOLSIZE $OCSVOLSIZE"

@@ -87,7 +87,7 @@ Parameters:
   OpenshiftVersion:
     Description: Choose Openshift Version
     Type: String
-    Default: "4.12.32"
+    Default: "4.12.46"
   EnableFips:
     Description: Enable Fips for Openshift
     Type: String
@@ -810,6 +810,33 @@ Resources:
               oc get pods -n openshift-storage
               chown -R ec2-user:ec2-user $HOME/ocs
             fi
+
+            ## EFS
+            if [ "${StorageType}" == "EFS" ]; then
+              echo "EFS is selected as StorageType"
+              if [ ${MultiAZ} == "True"  ]; then
+                MULTI_AZ="true"
+                EFS_SUBNETS=${PrivateSubnet1ID},${PrivateSubnet2ID},${PrivateSubnet3ID}
+              else 
+                MULTI_AZ="false"
+                EFS_SUBNETS=${PrivateSubnet1ID}
+              fi
+              export HOME=/home/ec2-user
+              wget https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/merck/efs-storage.sh -P $HOME
+              chmod +x $HOME/efs-storage.sh
+
+              export CLUSTER_USERNAME=kubeadmin
+              export CLUSTER_PASSWORD=$(cat $HOME/installer/auth/kubeadmin-password)
+              export CLUSTER_URL=https://api.${ClusterName}.${DomainName}:6443
+
+              /bin/bash $HOME/efs-storage.sh --base-path=$HOME \
+              --operation=create \
+              --subnets=$EFS_SUBNETS \
+              --cluster-username=$CLUSTER_USERNAME \
+              --cluster-password=$CLUSTER_PASSWORD \
+              --cluster-url=$CLUSTER_URL
+            fi
+            
             /usr/local/bin/cfn-signal --exit-code $ecode --id $AWS_STACKID  --data "See logs at $HOME/cpd-status/log/" $ICPDInstallationCompletedURL
           -
             MultiAZ: !If [ 3AZCondition , 'True', 'False']

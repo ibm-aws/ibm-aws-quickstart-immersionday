@@ -11,7 +11,7 @@ nfs_server:
 
 openshift:
 - name: "{{ env_id }}"
-  ocp_version: 4.12.32
+  ocp_version: |OCP_VERSION|
   domain_name: |DOMAIN_NAME|
   control_plane_flavour: |MASTER_INSTANCE_TYPE|
   control_plane_nodes: |MASTER_INSTANCE_NODE_COUNT|
@@ -30,3 +30,10 @@ openshift:
   openshift_storage:
   - storage_name: "{{ env_id }}-elastic"
     storage_type: |STORAGE_TYPE|
+  gpu:
+    install: |GPU_INSTALL|
+  mcg:
+    install: |MCG_INSTALL|
+    storage_type: storage-class
+    storage_class: gp3-csi
+

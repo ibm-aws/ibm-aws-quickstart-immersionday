@@ -876,54 +876,66 @@ Resources:
             sed -i 's/|BIGSCIENCEMT0XXL|/'${BigscienceMt0Xxl}'/g' $HOME/cpd-config/config/cp4d-480.yaml
             sed -i 's/|BIGCODESTARCODER|/'${BigcodeStarcoder}'/g' $HOME/cpd-config/config/cp4d-480.yaml
 
+
+            # Openshift
+
+            echo "---" > $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+            yq -i ".global_config.environment_name = \"${ClusterName}\"" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+            yq -i '.global_config.cloud_platform = "aws"' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+            yq -i ".global_config.aws_region = \"${AWS::Region}\"" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+
+            yq -i ".nfs_server[0].name = \"{{ env_id }}-elastic\"" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+            yq -i ".nfs_server[0].infrastructure.aws_region = \"{{ aws_region }}\"" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+
+            yq -i ".openshift[0].name = \"{{ env_id }}\"" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+            yq -i ".openshift[0].ocp_version = \"${OpenshiftVersion}\"" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+            yq -i ".openshift[0].domain_name = \"$NewDomainName\"" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+            yq -i ".openshift[0].control_plane_flavour = \"${MasterInstanceType}\"" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+            yq -i ".openshift[0].control_plane_nodes = 3" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+            yq -i ".openshift[0].compute_flavour = \"${ComputeInstanceType}\"" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+            yq -i ".openshift[0].compute_nodes = ${NumberOfCompute}" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+            yq -i ".openshift[0].infrastructure.type = \"self-managed\"" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+            yq -i ".openshift[0].infrastructure.aws_region = \"{{ aws_region }}\"" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+            yq -i ".openshift[0].infrastructure.use_sts = True" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+            yq -i ".openshift[0].infrastructure.credentials_mode = \"Manual\"" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+            yq -i ".openshift[0].infrastructure.multi_zone = ${MultiAZ}" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+            yq -i ".openshift[0].infrastructure.private_only = ${PrivateCluster}" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+            yq -i ".openshift[0].infrastructure.machine_cidr = \"${VPCCIDR}\"" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+
             if [ "${MultiAZ}" == "True" ]; then
-              wget https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/config/ocp-aws-self-managed-existing-vpc-sts.yaml
-              cp ./ocp-aws-self-managed-existing-vpc-sts.yaml $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+              if [ "${PrivateCluster}" == "True" ]; then
+                yq -i ".openshift[0].infrastructure.subnet_ids += [ \"${PrivateSubnet1ID}\",\"${PrivateSubnet2ID}\",\"${PrivateSubnet3ID}\" ]" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+              else
+                yq -i ".openshift[0].infrastructure.subnet_ids += [ \"${PrivateSubnet1ID}\",\"${PrivateSubnet2ID}\",\"${PrivateSubnet3ID}\",\"${PublicSubnet1ID}\",\"${PublicSubnet2ID}\",\"${PublicSubnet3ID}\" ]" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+              fi
             else
-              wget https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/config/ocp-aws-self-managed-existing-vpc-sts-1az.yaml
-              cp ./ocp-aws-self-managed-existing-vpc-sts-1az.yaml $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+              if [ "${PrivateCluster}" == "True" ]; then
+                yq -i ".openshift[0].infrastructure.subnet_ids += [ \"${PrivateSubnet1ID}\" ]" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+              else
+                yq -i ".openshift[0].infrastructure.subnet_ids += [ \"${PrivateSubnet1ID}\",\"${PublicSubnet1ID}\" ]" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+              fi
             fi
 
-            # replace parameters in openshift 
-            sed -i 's/|CLUSTER_NAME|/'${ClusterName}'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
-            sed -i 's/|AWS_REGION|/'${AWS::Region}'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
-            sed -i 's/|DOMAIN_NAME|/'$NewDomainName'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
-            sed -i 's/|MASTER_INSTANCE_TYPE|/'${MasterInstanceType}'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+            yq -i ".openshift[0].openshift_storage[0].storage_name = \"{{ env_id }}-elastic\"" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
 
-            sed -i 's/|MASTER_INSTANCE_NODE_COUNT|/'3'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
-
-            sed -i 's/|COMPUTE_INSTANCE_TYPE|/'${ComputeInstanceType}'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
-            sed -i 's/|COMPUTE_INSTANCE_NODE_COUNT|/'${NumberOfCompute}'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
-            sed -i 's/|COMPUTE_INSTANCE_NODE_COUNT|/'${NumberOfCompute}'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
-
-            if [ "${MultiAZ}" == "True" ]; then
-              sed -i 's/|MULTI_ZONE|/'True'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
-            else
-              sed -i 's/|MULTI_ZONE|/'False'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+            if [ "${StorageType}" == "aws-elastic" ]; then
+              yq -i ".openshift[0].openshift_storage[0].storage_type = \"${StorageType}\"" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
             fi
-
-            sed -i 's/|OCP_VERSION|/'${OpenshiftVersion}'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
-            sed -i 's/|PRIVATE_ONLY|/'${PrivateCluster}'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
-            sed -i 's#|VPC_CIDR|#'${VPCCIDR}'#g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
-            sed -i 's/|PRIVATE_SUBNET_1|/'${PrivateSubnet1ID}'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
-            sed -i 's/|PRIVATE_SUBNET_2|/'${PrivateSubnet2ID}'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
-            sed -i 's/|PRIVATE_SUBNET_3|/'${PrivateSubnet3ID}'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
-            sed -i 's/|PUBLIC_SUBNET_1|/'${PublicSubnet1ID}'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
-            sed -i 's/|PUBLIC_SUBNET_2|/'${PublicSubnet2ID}'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
-            sed -i 's/|PUBLIC_SUBNET_3|/'${PublicSubnet3ID}'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
-            sed -i 's/|STORAGE_TYPE|/'${StorageType}'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
 
             if [ "${WatsonxAI}" == "installed" ]; then
-              sed -i 's/|GPU_INSTALL|/'True'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+              yq -i ".openshift[0].gpu.install = True" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
             else
-              sed -i 's/|GPU_INSTALL|/'False'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+              yq -i ".openshift[0].gpu.install = False" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
             fi
 
             if [[ ${WatsonAssistant} == "installed" ||  ${WatsonDiscovery} == "installed" ]]; then
-              sed -i 's/|MCG_INSTALL|/'True'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+              yq -i ".openshift[0].mcg.install = True" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
             else
-              sed -i 's/|MCG_INSTALL|/'False'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+              yq -i ".openshift[0].mcg.install = False" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
             fi
+            
+            yq -i ".openshift[0].mcg.storage_type = \"storage-class\"" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+            yq -i ".openshift[0].mcg.storage_class = \"gp3-csi\"" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
 
             cd $HOME/cloud-pak-deployer
 
@@ -969,9 +981,9 @@ Resources:
             sudo chown -R ec2-user:ec2-user /home/ec2-user/
 
             # verify all configuration
-            #/bin/bash ./cp-deploy.sh env apply -e env_id=${ClusterName} --check-only [--accept-all-licenses]
+            /bin/bash ./cp-deploy.sh env apply -e env_id=${ClusterName} --check-only [--accept-all-licenses]
             #/bin/bash ./cp-deploy.sh env apply -e env_id=${ClusterName} [--accept-all-licenses] -vvv
-            /bin/bash ./cp-deploy.sh env apply -e env_id=${ClusterName} [--accept-all-licenses]
+            #/bin/bash ./cp-deploy.sh env apply -e env_id=${ClusterName} [--accept-all-licenses]
             ecode=$?
             /usr/local/bin/cfn-signal --exit-code $ecode --id $AWS_STACKID  --data "See logs at $HOME/cpd-status/log/" $ICPDInstallationCompletedURL
           -

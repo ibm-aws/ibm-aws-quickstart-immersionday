@@ -96,12 +96,18 @@ Parameters:
       - "true"
     Default: "false"
   MasterInstanceType:
-    Default: m5.xlarge
+    Default: m6i.xlarge
     AllowedValues:
       - m5.xlarge
       - m5.2xlarge
       - m5d.xlarge
       - m5d.2xlarge
+      - m6i.xlarge
+      - m6i.2xlarge
+      - m6i.4xlarge
+      - m6i.8xlarge
+      - m6i.12xlarge
+      - m6i.24xlarge
     ConstraintDescription: Must contain valid instance type
     Description: The EC2 instance type for the OpenShift master instances.
     Type: String
@@ -125,9 +131,8 @@ Parameters:
       - io1
       - io2
   WorkerInstanceType:
-    Default: m5.2xlarge
+    Default: m6i.2xlarge
     AllowedValues:
-      - m5.2xlarge
       - m5.4xlarge
       - m5.8xlarge
       - m5.12xlarge
@@ -136,16 +141,41 @@ Parameters:
       - m5a.8xlarge
       - m5a.12xlarge
       - m5a.24xlarge
+      - m6a.4xlarge
+      - m6a.8xlarge
+      - m6a.12xlarge
+      - m6a.24xlarge
+      - m6i.2xlarge
+      - m6i.4xlarge
+      - m6i.8xlarge
+      - m6i.12xlarge
+      - m6i.24xlarge
       - c5.4xlarge
       - c5.9xlarge
       - c5.12xlarge
       - c5.18xlarge
       - c5.24xlarge
+      - c6a.4xlarge
+      - c6a.8xlarge
+      - c6a.12xlarge
+      - c6a.24xlarge
+      - c6i.4xlarge
+      - c6i.8xlarge
+      - c6i.12xlarge
+      - c6i.24xlarge
       - r5.4xlarge
       - r5.9xlarge
       - r5.12xlarge
       - r5.18xlarge
       - r5.24xlarge
+      - r6a.4xlarge
+      - r6a.8xlarge
+      - r6a.12xlarge
+      - r6a.24xlarge
+      - r6i.4xlarge
+      - r6i.8xlarge
+      - r6i.12xlarge
+      - r6i.24xlarge
     ConstraintDescription: Must contain valid instance type
     Description: The EC2 instance type for the OpenShift worker instances.
     Type: String
@@ -179,6 +209,7 @@ Parameters:
     AllowedValues:
       - NA
       - OCS
+      - EFS
   OcsInstanceType:
     Description: The EC2 instance type for the OCS/ODF cluster instances.
     Default: m5.2xlarge

@@ -19,9 +19,9 @@ openshift:
   compute_nodes: |COMPUTE_INSTANCE_NODE_COUNT|
   infrastructure:
     type: self-managed
-    ami_id: ami-09c8e71f0609f055c
     aws_region: "{{ aws_region }}"
     use_sts: False
+    credentials_mode: Manual
     multi_zone: |MULTI_ZONE|
     private_only: |PRIVATE_ONLY|
     machine_cidr: |VPC_CIDR|
@@ -32,12 +32,12 @@ openshift:
     - |PUBLIC_SUBNET_1|
     - |PUBLIC_SUBNET_2|
     - |PUBLIC_SUBNET_3|
+  openshift_storage:
+  - storage_name: "{{ env_id }}-elastic"
+    storage_type: |STORAGE_TYPE|
   gpu:
     install: |GPU_INSTALL|
   mcg:
     install: |MCG_INSTALL|
     storage_type: storage-class
     storage_class: gp3-csi
-  openshift_storage:
-  - storage_name: "{{ env_id }}-elastic"
-    storage_type: |STORAGE_TYPE|

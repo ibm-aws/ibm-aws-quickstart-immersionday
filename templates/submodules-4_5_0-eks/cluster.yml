@@ -736,24 +736,14 @@ Resources:
             
             #Added the next 5 lines to include required tools for the installation of CP4D
             sudo yum update
-            sudo yum install -y git      
-            sudo yum install -y yum-utils
+            sudo yum install -y git yum-utils jq httpd-tools yum-plugin-copr podman python39 wget
+            podman version
+
             sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
             sudo yum -y install terraform
            
-            
-            ### START: install podman ###
-            sudo yum install httpd-tools -y
             sudo curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable.repo https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/CentOS_7/devel:kubic:libcontainers:stable.repo
-            sudo yum install yum-plugin-copr
             sudo yum copr enable lsm5/container-selinux -y
-            sudo yum install podman -y
-            podman version
-            
-            yum install python38 -y
-            yum install wget -y
-            ### END: install podman ###
-
 
             git clone https://github.com/aws-quickstart/quickstart-linux-utilities.git
             sed -i "s/aws-cfn-bootstrap-latest.tar.gz/aws-cfn-bootstrap-py3-latest.tar.gz/g" /quickstart-linux-utilities/quickstart-cfn-tools.source 

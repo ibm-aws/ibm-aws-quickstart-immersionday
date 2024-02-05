@@ -43,11 +43,10 @@ Metadata:
           - ClusterName
           - StorageType
           - PrivateCluster
+          - OpenshiftVersion
       - Label: 
           default: Openshift Configuration
         Parameters:
-          - OpenshiftUsername
-          - OpenshiftPassword
           - LicenseAgreement
           - CPDExternalRegistry
       - Label: 
@@ -70,6 +69,21 @@ Metadata:
           - WSL
           - WSP
           - RSTUDIO
+          - OPENPAGES
+          - WatsonxData
+          - WatsonxAI
+      - Label: 
+          default: WatsonxAI foundation models
+        Parameters:
+          - GoogleFlanT5Xxl
+          - GoogleFlanUl2
+          - EleutheraiGptNeox20b
+          - IBMGranite13bChatV1
+          - IBMGranite13bInstructV1
+          - MetaLlamaLlamaTwo70bChat 
+          - IBMMpt7bInstruct2
+          - BigscienceMt0Xxl
+          - BigcodeStarcoder
 Parameters:
   APIKey:
     Description: >-
@@ -125,17 +139,23 @@ Parameters:
     Type: AWS::EC2::VPC::Id
     Default: vpc-03738f32953df603f
   MasterInstanceType:
-    Default: m5.xlarge
+    Default: m6i.xlarge
     AllowedValues:
       - m5.xlarge
       - m5.2xlarge
       - m5d.xlarge
       - m5d.2xlarge
+      - m6i.xlarge
+      - m6i.2xlarge
+      - m6i.4xlarge
+      - m6i.8xlarge
+      - m6i.12xlarge
+      - m6i.24xlarge
     ConstraintDescription: Must contain valid instance type
     Description: The EC2 instance type for the OpenShift master instances.
     Type: String
   ComputeInstanceType:
-    Default: m5.4xlarge
+    Default: m6i.4xlarge
     AllowedValues:
       - m5.4xlarge
       - m5.8xlarge
@@ -145,16 +165,41 @@ Parameters:
       - m5a.8xlarge
       - m5a.12xlarge
       - m5a.24xlarge
+      - m6a.4xlarge
+      - m6a.8xlarge
+      - m6a.12xlarge
+      - m6a.24xlarge
+      - m6i.2xlarge
+      - m6i.4xlarge
+      - m6i.8xlarge
+      - m6i.12xlarge
+      - m6i.24xlarge
       - c5.4xlarge
       - c5.9xlarge
       - c5.12xlarge
       - c5.18xlarge
       - c5.24xlarge
+      - c6a.4xlarge
+      - c6a.8xlarge
+      - c6a.12xlarge
+      - c6a.24xlarge
+      - c6i.4xlarge
+      - c6i.8xlarge
+      - c6i.12xlarge
+      - c6i.24xlarge
       - r5.4xlarge
       - r5.9xlarge
       - r5.12xlarge
       - r5.18xlarge
       - r5.24xlarge
+      - r6a.4xlarge
+      - r6a.8xlarge
+      - r6a.12xlarge
+      - r6a.24xlarge
+      - r6i.4xlarge
+      - r6i.8xlarge
+      - r6i.12xlarge
+      - r6i.24xlarge    
     ConstraintDescription: Must contain valid instance type
     Description: The EC2 instance type for the OpenShift compute instances.
     Type: String
@@ -171,7 +216,7 @@ Parameters:
     Type: List<AWS::EC2::AvailabilityZone::Name>
     Default: us-east-2a,us-east-2b,us-east-2c
   NumberOfCompute:
-    Default: '10'
+    Default: '3'
     Description: The desired capacity for the OpenShift compute instances. Minimum of 3 nodes required. If the number of compute instances exceeds your Red Hat entitlement limits or AWS instance limits, the stack will fail. Choose a number that is within your limits.
     Type: Number
   ICPDDeploymentLogsBucketName:
@@ -201,15 +246,10 @@ Parameters:
       - "True"
       - "False"
     Default: "False"
-  OpenshiftUsername:
-    Description: Username to be used to login to Openshift Console.
+  OpenshiftVersion:
+    Description: Choose Red Hat OpenShift Service on AWS (ROSA) Version.
     Type: String
-    Default: "ocsadmin"
-  OpenshiftPassword:
-    Description: Password to be used to login to Openshift and Cloud Pak for Data Console.
-    Type: String
-    NoEcho: 'true'
-    Default: "ocsadmin"
+    Default: "4.12.45"
   LicenseAgreement:
     Description: >-
       I have read and agreed to the license terms for IBM Cloud Pak for Data that were provided to me at time of purchase.
@@ -246,7 +286,7 @@ Parameters:
     AllowedValues:
       - "installed"
       - "removed"
-    Default: "installed"
+    Default: "removed"
   DB2U:
     Description: >-
        Choose installed to install the DB2U service.
@@ -254,7 +294,7 @@ Parameters:
     AllowedValues:
       - "installed"
       - "removed"
-    Default: "installed"
+    Default: "removed"
   DMC:
     Description: >-
        Choose installed to install the Data Management Console service.
@@ -262,7 +302,7 @@ Parameters:
     AllowedValues:
       - "installed"
       - "removed"
-    Default: "installed"
+    Default: "removed"
   DV:
     Description: >-
        Choose installed to install the Data Virtualization service.
@@ -270,7 +310,7 @@ Parameters:
     AllowedValues:
       - "installed"
       - "removed"
-    Default: "installed"
+    Default: "removed"
   FACTSHEET:
     Description: >-
        Choose installed to install the Factsheet service.
@@ -310,7 +350,7 @@ Parameters:
     AllowedValues:
       - "installed"
       - "removed"
-    Default: "installed"
+    Default: "removed"
   WatsonSpeech:
     Description: >-
        Choose installed to install the Watson Speech service.
@@ -326,7 +366,7 @@ Parameters:
     AllowedValues:
       - "installed"
       - "removed"
-    Default: "installed"
+    Default: "removed"
   WML:
     Description: >-
        Choose installed to install the WML service.
@@ -334,7 +374,7 @@ Parameters:
     AllowedValues:
       - "installed"
       - "removed"
-    Default: "installed" 
+    Default: "removed" 
   WSL:
     Description: >-
        Choose installed to install the WSL service.
@@ -342,7 +382,7 @@ Parameters:
     AllowedValues:
       - "installed"
       - "removed"
-    Default: "installed"
+    Default: "removed"
   WSP:
     Description: >-
        Choose installed to install the Watson pipeline service.
@@ -359,6 +399,103 @@ Parameters:
       - "installed"
       - "removed"
     Default: "removed"
+  OPENPAGES:
+    Description: >-
+       Choose installed to install the OpenPages service.
+    Type: String
+    AllowedValues:
+      - "installed"
+      - "removed"
+    Default: "removed"    
+  WatsonxData:
+    Description: >-
+       Choose installed to install the WatsonxData service.
+    Type: String
+    AllowedValues:
+      - "installed"
+      - "removed"
+    Default: "removed"    
+  WatsonxAI:
+    Description: >-
+       Choose installed to install the WatsonxAI service.
+    Type: String
+    AllowedValues:
+      - "installed"
+      - "removed"
+    Default: "removed"
+  GoogleFlanT5Xxl:
+    Description: >-
+       Choose installed to install the google-flan-t5-xxl WatsonxAI foundational model.
+    Type: String
+    AllowedValues:
+      - "installed"
+      - "removed"
+    Default: "removed"
+  GoogleFlanUl2:
+    Description: >-
+       Choose installed to install the google-flan-ul2 WatsonxAI foundational model.
+    Type: String
+    AllowedValues:
+      - "installed"
+      - "removed"
+    Default: "removed"
+  EleutheraiGptNeox20b:
+    Description: >-
+       Choose installed to install the eleutherai-gpt-neox-20b WatsonxAI foundational model.
+    Type: String
+    AllowedValues:
+      - "installed"
+      - "removed"
+    Default: "removed"
+  IBMGranite13bChatV1:
+    Description: >-
+       Choose installed to install the ibm-granite-13b-chat-v1 WatsonxAI foundational model.
+    Type: String
+    AllowedValues:
+      - "installed"
+      - "removed"
+    Default: "removed"
+  IBMGranite13bInstructV1:
+    Description: >-
+       Choose installed to install the ibm-granite-13b-instruct-v1 WatsonxAI foundational model.
+    Type: String
+    AllowedValues:
+      - "installed"
+      - "removed"
+    Default: "removed"
+  MetaLlamaLlamaTwo70bChat:
+    Description: >-
+       Choose installed to install the meta-llama-llama-2-70b-chat WatsonxAI foundational model.
+    Type: String
+    AllowedValues:
+      - "installed"
+      - "removed"
+    Default: "removed"
+  IBMMpt7bInstruct2:
+    Description: >-
+       Choose installed to install the ibm-mpt-7b-instruct2 WatsonxAI foundational model.
+    Type: String
+    AllowedValues:
+      - "installed"
+      - "removed"
+    Default: "removed"
+  BigscienceMt0Xxl:
+    Description: >-
+       Choose installed to install the bigscience-mt0-xxl WatsonxAI foundational model.
+    Type: String
+    AllowedValues:
+      - "installed"
+      - "removed"
+    Default: "removed"
+  BigcodeStarcoder:
+    Description: >-
+       Choose installed to install the bigcode-starcoder WatsonxAI foundational model.
+    Type: String
+    AllowedValues:
+      - "installed"
+      - "removed"
+    Default: "removed"
+
 Mappings:
   AWSAMIRegionMap:
     us-east-1:
@@ -482,15 +619,6 @@ Resources:
                   - logs:FilterLogEvents
                 Resource:
                   - '*' 
-#  CPDSecret:
-#    Type: "AWS::SecretsManager::Secret"
-#    Properties:
-#      SecretString: !Sub '{"apikey":"${APIKey}", "password":"${OpenshiftPassword}", "username":"admin"}'
-
-  OpenshiftSecret:
-    Type: "AWS::SecretsManager::Secret"
-    Properties:
-      SecretString: !Sub '{"ocpUsername":"${OpenshiftUsername}", "ocpPassword":"${OpenshiftPassword}"}'
 
   BootNodeIamRole:
     Type: AWS::IAM::Role
@@ -661,12 +789,8 @@ Resources:
             
             #Added the next 5 lines to include required tools for the installation of CP4D
             yum update
-            yum install -y git
-            yum install -y podman
-            yum install -y wget
+            yum install -y git podman wget jq python39 unzip
             podman version
-            yum install -y jq
-            yum install python38 -y
 
             git clone https://github.com/aws-quickstart/quickstart-linux-utilities.git
             sed -i "s/aws-cfn-bootstrap-latest.tar.gz/aws-cfn-bootstrap-py3-latest.tar.gz/g" /quickstart-linux-utilities/quickstart-cfn-tools.source 
@@ -689,8 +813,8 @@ Resources:
             wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
             chmod a+x /usr/local/bin/yq
 
-            wget https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/stable/openshift-client-linux.tar.gz
-            tar -xvzf openshift-client-linux.tar.gz
+            wget https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/${OpenshiftVersion}/openshift-client-linux-${OpenshiftVersion}.tar.gz
+            tar -xvzf openshift-client-linux-${OpenshiftVersion}.tar.gz
             sudo cp oc /usr/local/bin/
             sudo cp oc /usr/bin/
             sudo cp kubectl /usr/local/bin/
@@ -703,15 +827,17 @@ Resources:
 
             export HOME=/home/ec2-user
 
+            export NewDomainName=${DomainName}
+
             # domain delegation
             #create random subdomain
-            export RANDSTR=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 6 | head -n 1)
-            export NewDomainName=cpd$RANDSTR.${DomainName}
-            echo "Domain name .."$NewDomainName
-            wget https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/config/domaindelegation.sh
-            cp ./domaindelegation.sh $HOME/domaindelegation.sh
-            chmod +x $HOME/domaindelegation.sh
-            /bin/bash  $HOME/domaindelegation.sh $NewDomainName
+            #export RANDSTR=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 6 | head -n 1)
+            #export NewDomainName=cpd$RANDSTR.${DomainName}
+            #echo "Domain name .."$NewDomainName
+            #wget https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/config/domaindelegation.sh
+            #cp ./domaindelegation.sh $HOME/domaindelegation.sh
+            #chmod +x $HOME/domaindelegation.sh
+            #/bin/bash  $HOME/domaindelegation.sh $NewDomainName
 
             chmod +x $HOME/destroy.sh
 
@@ -735,33 +861,47 @@ Resources:
 
 
             # copy openshift and CP4D config file to config dir
-            wget https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/config/cp4d-464.yaml
-            cp ./cp4d-464.yaml $HOME/cpd-config/config/
+            wget https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/config/cp4d-480.yaml
+            cp ./cp4d-480.yaml $HOME/cpd-config/config/
 
             # replace parameters in CPD
-            sed -i 's/|CA|/'${CA}'/g' $HOME/cpd-config/config/cp4d-464.yaml
-            sed -i 's/|CDE|/'${CDE}'/g' $HOME/cpd-config/config/cp4d-464.yaml
-            sed -i 's/|DB2|/'${DB2}'/g' $HOME/cpd-config/config/cp4d-464.yaml
-            sed -i 's/|DB2U|/'${DB2U}'/g' $HOME/cpd-config/config/cp4d-464.yaml
-            sed -i 's/|DMC|/'${DMC}'/g' $HOME/cpd-config/config/cp4d-464.yaml
-            sed -i 's/|DV|/'${DV}'/g' $HOME/cpd-config/config/cp4d-464.yaml
-            sed -i 's/|FACTSHEET|/'${FACTSHEET}'/g' $HOME/cpd-config/config/cp4d-464.yaml
-            sed -i 's/|WATSONASSISTANT|/'${WatsonAssistant}'/g' $HOME/cpd-config/config/cp4d-464.yaml
-            sed -i 's/|WATSONDISCOVERY|/'${WatsonDiscovery}'/g' $HOME/cpd-config/config/cp4d-464.yaml
-            sed -i 's/|WATSONKNOWLEDGESTUDIO|/'${WatsonKnowledgeStudio}'/g' $HOME/cpd-config/config/cp4d-464.yaml
-            sed -i 's/|WATSONOPENSCALE|/'${OpenScale}'/g' $HOME/cpd-config/config/cp4d-464.yaml
-            sed -i 's/|WATSONSPEECH|/'${WatsonSpeech}'/g' $HOME/cpd-config/config/cp4d-464.yaml
-            sed -i 's/|WKC|/'${WKC}'/g' $HOME/cpd-config/config/cp4d-464.yaml
-            sed -i 's/|WML|/'${WML}'/g' $HOME/cpd-config/config/cp4d-464.yaml
-            sed -i 's/|WSL|/'${WSL}'/g' $HOME/cpd-config/config/cp4d-464.yaml
-            sed -i 's/|WSP|/'${WSP}'/g' $HOME/cpd-config/config/cp4d-464.yaml
-            sed -i 's/|RSTUDIO|/'${RSTUDIO}'/g' $HOME/cpd-config/config/cp4d-464.yaml
+            sed -i 's/|CA|/'${CA}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|CDE|/'${CDE}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|DB2|/'${DB2}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|DB2U|/'${DB2U}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|DMC|/'${DMC}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|DV|/'${DV}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|FACTSHEET|/'${FACTSHEET}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|WATSONASSISTANT|/'${WatsonAssistant}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|WATSONDISCOVERY|/'${WatsonDiscovery}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|WATSONKNOWLEDGESTUDIO|/'${WatsonKnowledgeStudio}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|WATSONOPENSCALE|/'${OpenScale}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|WATSONSPEECH|/'${WatsonSpeech}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|WKC|/'${WKC}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|WML|/'${WML}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|WSL|/'${WSL}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|WSP|/'${WSP}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|RSTUDIO|/'${RSTUDIO}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|OPENPAGES|/'${OPENPAGES}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|WATSONXDATA|/'${WatsonxData}'/g' $HOME/cpd-config/config/cp4d-480.yaml
 
+            # watsonx AI
+            sed -i 's/|WATSONXAI|/'${WatsonxAI}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|GOOGLEFLANT5XXL|/'${GoogleFlanT5Xxl}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|GOOGLEFLANUL2|/'${GoogleFlanUl2}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|ELEUTHERAIGPTNEOX20B|/'${EleutheraiGptNeox20b}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|IBMGRANITE13BCHATV1|/'${IBMGranite13bChatV1}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|IBMGRANITE13BINSTRUCTV1|/'${IBMGranite13bInstructV1}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|METALLAMALLAMA270BCHAT|/'${MetaLlamaLlamaTwo70bChat}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|IBMMPT7BINSTRUCT2|/'${IBMMpt7bInstruct2}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|BIGSCIENCEMT0XXL|/'${BigscienceMt0Xxl}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|BIGCODESTARCODER|/'${BigcodeStarcoder}'/g' $HOME/cpd-config/config/cp4d-480.yaml            
 
             wget https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/config/ocp-aws-self-managed-existing-vpc.yaml
             cp ./ocp-aws-self-managed-existing-vpc.yaml $HOME/cpd-config/config/
 
             # replace parameters in openshift 
+            sed -i 's/|OCP_VERSION|/'${OpenshiftVersion}'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml            
             sed -i 's/|CLUSTER_NAME|/'${ClusterName}'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
             sed -i 's/|AWS_REGION|/'${AWS::Region}'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
             sed -i 's/|DOMAIN_NAME|/'$NewDomainName'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
@@ -792,6 +932,18 @@ Resources:
             sed -i 's/|PUBLIC_SUBNET_2|/'${PublicSubnet2ID}'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
             sed -i 's/|PUBLIC_SUBNET_3|/'${PublicSubnet3ID}'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
             sed -i 's/|STORAGE_TYPE|/'${StorageType}'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+
+            if [ "${WatsonxAI}" == "installed" ]; then
+              sed -i 's/|GPU_INSTALL|/'True'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+            else
+              sed -i 's/|GPU_INSTALL|/'False'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+            fi
+
+            if [[ ${WatsonAssistant} == "installed" ||  ${WatsonDiscovery} == "installed" ]]; then
+              sed -i 's/|MCG_INSTALL|/'True'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+            else
+              sed -i 's/|MCG_INSTALL|/'False'/g' $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+            fi
 
             cd $HOME/cloud-pak-deployer
             

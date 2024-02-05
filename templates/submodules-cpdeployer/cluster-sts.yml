@@ -229,6 +229,7 @@ Parameters:
     Type: String
     AllowedValues:
       - "aws-elastic"
+      - "ocs"
     Default: "aws-elastic"
   PrivateCluster:  
     Description: To Deploy a Private cluster select true and false for Public cluster
@@ -916,10 +917,16 @@ Resources:
               fi
             fi
 
-            yq -i ".openshift[0].openshift_storage[0].storage_name = \"{{ env_id }}-elastic\"" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
-
             if [ "${StorageType}" == "aws-elastic" ]; then
+              yq -i ".openshift[0].openshift_storage[0].storage_name = \"{{ env_id }}-elastic\"" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
               yq -i ".openshift[0].openshift_storage[0].storage_type = \"${StorageType}\"" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+            fi
+
+            if [ "${StorageType}" == "ocs" ]; then
+              yq -i ".openshift[0].openshift_storage[0].storage_name = \"ocs-storage\"" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+              yq -i ".openshift[0].openshift_storage[0].storage_type = \"${StorageType}\"" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+              yq -i ".openshift[0].openshift_storage[0].ocs_storage_label = \"ocs\"" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
+              yq -i ".openshift[0].openshift_storage[0].ocs_storage_size_gb = 512" $HOME/cpd-config/config/ocp-aws-self-managed-existing-vpc.yaml
             fi
 
             if [ "${WatsonxAI}" == "installed" ]; then
@@ -981,9 +988,9 @@ Resources:
             sudo chown -R ec2-user:ec2-user /home/ec2-user/
 
             # verify all configuration
-            /bin/bash ./cp-deploy.sh env apply -e env_id=${ClusterName} --check-only [--accept-all-licenses]
+            #/bin/bash ./cp-deploy.sh env apply -e env_id=${ClusterName} --check-only [--accept-all-licenses]
             #/bin/bash ./cp-deploy.sh env apply -e env_id=${ClusterName} [--accept-all-licenses] -vvv
-            #/bin/bash ./cp-deploy.sh env apply -e env_id=${ClusterName} [--accept-all-licenses]
+            /bin/bash ./cp-deploy.sh env apply -e env_id=${ClusterName} [--accept-all-licenses]
             ecode=$?
             /usr/local/bin/cfn-signal --exit-code $ecode --id $AWS_STACKID  --data "See logs at $HOME/cpd-status/log/" $ICPDInstallationCompletedURL
           -

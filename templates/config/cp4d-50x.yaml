@@ -2,7 +2,7 @@
 cp4d:
 - project: cpd
   openshift_cluster_name: "{{ env_id }}"
-  cp4d_version: 4.8.5
+  cp4d_version: 5.0.0
   cp4d_entitlement: cpd-enterprise
   cp4d_production_license: True
   accept_licenses: True
@@ -55,6 +55,10 @@ cp4d:
     description: Db2 Data Gate
     state: removed
 
+  - name: dataproduct
+    description: Data Product Hub
+    state: removed    
+
   - name: datastage-ent
     description: DataStage Enterprise
     state: removed
@@ -101,6 +105,11 @@ cp4d:
   - name: dmc
     description: Db2 Data Management Console
     state: |DMC|
+    instances:
+    - name: data-management-console
+      description: Data Management Console
+      size: medium
+      storage_size_gb: 50    
 
   - name: dods
     description: Decision Optimization
@@ -144,7 +153,7 @@ cp4d:
     size: small
     state: |FACTSHEET|
 
-  - name: hadoop
+  - name: hee
     description: Execution Engine for Apache Hadoop
     size: small
     state: removed
@@ -231,17 +240,49 @@ cp4d:
   - name: watsonx_ai
     description: watsonx.ai
     state: |WATSONXAI|
+    installation_options:
+      tuning_disabled: true
     models:
-    - model_id: google-flan-t5-xxl
-      state: |GOOGLEFLANT5XXL|
+    - model_id: allam-1-13b-instruct
+      state: removed
+    - model_id: codellama-codellama-34b-instruct-hf
+      state: removed
+    - model_id: elyza-japanese-llama-2-7b-instruct
+      state: removed
     - model_id: google-flan-ul2
       state: |GOOGLEFLANUL2|
+    - model_id: google-flan-t5-xl
+      state: removed    
+    - model_id: google-flan-t5-xxl
+      state: |GOOGLEFLANT5XXL|
     - model_id: eleutherai-gpt-neox-20b
       state: |ELEUTHERAIGPTNEOX20B|
+    - model_id: ibm-granite-8b-japanese
+      state: removed
     - model_id: ibm-granite-13b-chat-v1
       state: |IBMGRANITE13BCHATV1|
+    - model_id: ibm-granite-13b-chat-v2
+      state: removed
     - model_id: ibm-granite-13b-instruct-v1
       state: |IBMGRANITE13BINSTRUCTV1|
+    - model_id: ibm-granite-13b-instruct-v2
+      state: removed
+    - model_id: ibm-granite-20b-multilingual
+      state: removed
+    - model_id: core42-jais-13b-chat
+      state: removed
+    - model_id: meta-llama-llama-2-13b-chat
+      state: removed
+    - model_id: meta-llama-llama3-8b-instruct
+      state: removed
+    - model_id: mncai-llama-2-13b-dpo-v7
+      state: removed
+    - model_id: ibm-mistralai-merlinite-7b
+      state: removed
+    - model_id: mistralai-mixtral-8x7b-instruct-v01
+      state: removed
+    - model_id: ibm-mistralai-mixtral-8x7b-instruct-v01-q
+      state: removed
     - model_id: meta-llama-llama-2-70b-chat
       state: |METALLAMALLAMA270BCHAT|
     - model_id: ibm-mpt-7b-instruct2
@@ -262,7 +303,15 @@ cp4d:
       installType: all
       enableFactsheet: true
       enableOpenpages: true
-      enableOpenscale: true    
+      enableOpenscale: true
+
+  - name: watsonx_orchestrate
+    description: watsonx.orchestrate
+    app_connect:
+      app_connect_project: ibm-app-connect
+      app_connect_case_version: 11.5.0
+      app_connect_channel_version: v11.5
+    state: removed      
 
   - name: wkc
     description: Watson Knowledge Catalog
@@ -274,6 +323,22 @@ cp4d:
       enableDataQuality: False
       enableFactSheet: False
       enableMANTA: True
+
+  - name: ikc_premium
+    description: IBM Knowledge Catalog - Premium edition
+    size: small
+    state: removed
+    installation_options:
+      enableKnowledgeGraph: False
+      enableDataQuality: False
+
+  - name: ikc_standard
+    description: IBM Knowledge Catalog - Standard edition
+    size: small
+    state: removed
+    installation_options:
+      enableKnowledgeGraph: False
+      enableDataQuality: False            
 
   - name: wml
     description: Watson Machine Learning
@@ -297,14 +362,12 @@ cp4d:
   - name: ws-runtimes
     description: Watson Studio Runtimes
     runtimes:
-    - ibm-cpd-ws-runtime-py39
-    - ibm-cpd-ws-runtime-222-py
-    - ibm-cpd-ws-runtime-py39gpu
-    - ibm-cpd-ws-runtime-222-pygpu
+    - ibm-cpd-ws-runtime-241-py
+    - ibm-cpd-ws-runtime-231-py
+    - ibm-cpd-ws-runtime-241-pygpu
     - ibm-cpd-ws-runtime-231-pygpu
-    - ibm-cpd-ws-runtime-r36
-    - ibm-cpd-ws-runtime-222-r
-    - ibm-cpd-ws-runtime-231-r
+    - ibm-cpd-ws-runtime-241-r
+    - ibm-cpd-ws-runtime-231-r    
     state: removed
 
 #

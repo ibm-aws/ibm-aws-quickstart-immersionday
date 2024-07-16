@@ -435,10 +435,10 @@ Parameters:
 Mappings:
   AWSAMIRegionMap:
     us-east-1:
-      BootNodeAmiId: ami-06640050dc3f556bb
+      BootNodeAmiId: ami-0c26d25ec2932e467
       COREOSAmiId: ami-0b35795bcab04ee70
     us-east-2:
-      BootNodeAmiId: ami-092b43193629811af
+      BootNodeAmiId: ami-09a2344bd22fcf787
       COREOSAmiId: ami-0c17b13bb8b268411
     us-west-1:
       BootNodeAmiId: ami-0186e3fec9b0283ee
@@ -735,8 +735,8 @@ Resources:
             #!/bin/bash -x
             
             #Added the next 5 lines to include required tools for the installation of CP4D
-            sudo yum update
-            sudo yum install -y git yum-utils jq httpd-tools yum-plugin-copr podman python39 wget
+            sudo yum update -y
+            sudo yum install -y git yum-utils jq httpd-tools yum-plugin-copr podman python39 wget unzip
             podman version
 
             sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo

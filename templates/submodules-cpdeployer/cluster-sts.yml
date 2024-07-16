@@ -235,7 +235,7 @@ Parameters:
   OpenshiftVersion:
     Description: Choose Red Hat OpenShift Service on AWS (ROSA) Version.
     Type: String
-    Default: "4.12.51"
+    Default: "4.14.30"
   LicenseAgreement:
     Description: >-
       I have read and agreed to the license terms for IBM Cloud Pak for Data that were provided to me at time of purchase.
@@ -408,7 +408,7 @@ Parameters:
     AllowedValues:
       - "installed"
       - "removed"
-    Default: "removed"      
+    Default: "removed"
   WatsonxAI:
     Description: >-
        Choose installed to install the WatsonxAI service.
@@ -843,42 +843,42 @@ Resources:
 
 
             # copy openshift and CP4D config file to config dir
-            wget https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/config/cp4d-48x.yaml
-            cp ./cp4d-48x.yaml $HOME/cpd-config/config/
+            wget https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/config/cp4d-50x.yaml
+            cp ./cp4d-50x.yaml $HOME/cpd-config/config/
 
             # replace parameters in CPD
-            sed -i 's/|CA|/'${CA}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|CDE|/'${CDE}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|DB2|/'${DB2}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|DB2U|/'${DB2U}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|DMC|/'${DMC}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|DV|/'${DV}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|FACTSHEET|/'${FACTSHEET}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|WATSONASSISTANT|/'${WatsonAssistant}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|WATSONDISCOVERY|/'${WatsonDiscovery}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|WATSONKNOWLEDGESTUDIO|/'${WatsonKnowledgeStudio}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|WATSONOPENSCALE|/'${OpenScale}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|WATSONSPEECH|/'${WatsonSpeech}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|WKC|/'${WKC}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|WML|/'${WML}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|WSL|/'${WSL}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|WSP|/'${WSP}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|RSTUDIO|/'${RSTUDIO}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|OPENPAGES|/'${OPENPAGES}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|WATSONXDATA|/'${WatsonxData}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|WATSONXGOV|/'${WatsonxGovernance}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
+            sed -i 's/|CA|/'${CA}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|CDE|/'${CDE}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|DB2|/'${DB2}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|DB2U|/'${DB2U}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|DMC|/'${DMC}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|DV|/'${DV}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|FACTSHEET|/'${FACTSHEET}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|WATSONASSISTANT|/'${WatsonAssistant}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|WATSONDISCOVERY|/'${WatsonDiscovery}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|WATSONKNOWLEDGESTUDIO|/'${WatsonKnowledgeStudio}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|WATSONOPENSCALE|/'${OpenScale}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|WATSONSPEECH|/'${WatsonSpeech}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|WKC|/'${WKC}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|WML|/'${WML}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|WSL|/'${WSL}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|WSP|/'${WSP}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|RSTUDIO|/'${RSTUDIO}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|OPENPAGES|/'${OPENPAGES}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|WATSONXDATA|/'${WatsonxData}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|WATSONXGOV|/'${WatsonxGovernance}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
 
             # watsonx AI
-            sed -i 's/|WATSONXAI|/'${WatsonxAI}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|GOOGLEFLANT5XXL|/'${GoogleFlanT5Xxl}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|GOOGLEFLANUL2|/'${GoogleFlanUl2}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|ELEUTHERAIGPTNEOX20B|/'${EleutheraiGptNeox20b}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|IBMGRANITE13BCHATV1|/'${IBMGranite13bChatV1}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|IBMGRANITE13BINSTRUCTV1|/'${IBMGranite13bInstructV1}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|METALLAMALLAMA270BCHAT|/'${MetaLlamaLlamaTwo70bChat}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|IBMMPT7BINSTRUCT2|/'${IBMMpt7bInstruct2}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|BIGSCIENCEMT0XXL|/'${BigscienceMt0Xxl}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
-            sed -i 's/|BIGCODESTARCODER|/'${BigcodeStarcoder}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
+            sed -i 's/|WATSONXAI|/'${WatsonxAI}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|GOOGLEFLANT5XXL|/'${GoogleFlanT5Xxl}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|GOOGLEFLANUL2|/'${GoogleFlanUl2}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|ELEUTHERAIGPTNEOX20B|/'${EleutheraiGptNeox20b}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|IBMGRANITE13BCHATV1|/'${IBMGranite13bChatV1}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|IBMGRANITE13BINSTRUCTV1|/'${IBMGranite13bInstructV1}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|METALLAMALLAMA270BCHAT|/'${MetaLlamaLlamaTwo70bChat}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|IBMMPT7BINSTRUCT2|/'${IBMMpt7bInstruct2}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|BIGSCIENCEMT0XXL|/'${BigscienceMt0Xxl}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|BIGCODESTARCODER|/'${BigcodeStarcoder}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
 
 
             # Openshift

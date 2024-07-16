@@ -67,6 +67,7 @@ Metadata:
           - RSTUDIO
           - OPENPAGES
           - WatsonxData
+          - WatsonxGovernance
           - WatsonxAI
       - Label: 
           default: WatsonxAI foundation models
@@ -195,7 +196,7 @@ Parameters:
   OpenshiftVersion:
     Description: Choose Red Hat OpenShift Service on AWS (ROSA) Version.
     Type: String
-    Default: "4.12.45"
+    Default: "4.14.30"
   LicenseAgreement:
     Description: >-
       I have read and agreed to the license terms for IBM Cloud Pak for Data that were provided to me at time of purchase.
@@ -356,7 +357,15 @@ Parameters:
     AllowedValues:
       - "installed"
       - "removed"
-    Default: "removed"    
+    Default: "removed"
+  WatsonxGovernance:
+    Description: >-
+       Choose installed to install the WatsonxGovernance service.
+    Type: String
+    AllowedValues:
+      - "installed"
+      - "removed"
+    Default: "removed"       
   WatsonxAI:
     Description: >-
        Choose installed to install the WatsonxAI service.
@@ -520,6 +529,15 @@ Conditions:
   NfsCondition: !Equals [!Ref StorageType, 'aws-elastic']
 
 Resources:
+  CPDIAMUser:
+    Type: 'AWS::IAM::User'
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+  CPDIAMUserAccessKey:
+    Type: 'AWS::IAM::AccessKey'
+    Properties:
+      UserName: !Ref CPDIAMUser
   LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -552,7 +570,6 @@ Resources:
                   - logs:FilterLogEvents
                 Resource:
                   - '*' 
-
   BootNodeIamRole:
     Type: AWS::IAM::Role
     Properties:
@@ -632,6 +649,14 @@ Resources:
         CidrIp: !Ref BootNodeAccessCIDR
       VpcId: !Ref VPCID
 
+  AWSCredentialSecret:
+    Type: "AWS::SecretsManager::Secret"
+    Properties:
+      SecretString: !Sub 
+        - '{"aws_secret_access_key":"${CPDIAMUserAccessKey}", "aws_access_key_id":"${CPDIAMUserSecret}"}'
+        - {CPDIAMUserAccessKey: !Ref CPDIAMUserAccessKey, CPDIAMUserSecret: !GetAtt CPDIAMUserAccessKey.SecretAccessKey}
+
+
   BootnodeInstance:
     Type: AWS::EC2::Instance
     Metadata:
@@ -650,29 +675,26 @@ Resources:
               owner: root
               group: root
             /home/ec2-user/destroy.sh:
-              content: !Sub |
-                echo "$1 - Destroying"
-                export HOME=/home/ec2-user
-                unset AWS_SESSION_TOKEN AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
-                out=$(aws sts assume-role --role-arn ${BootNodeIamRole.Arn} --role-session-name OCPInstall)
-                export AWS_ACCESS_KEY_ID=$(echo "$out" | jq -r '.Credentials.AccessKeyId')
-                echo $AWS_ACCESS_KEY_ID
-                export AWS_SECRET_ACCESS_KEY=$(echo "$out" | jq -r '.Credentials.SecretAccessKey')
-                echo $AWS_SECRET_ACCESS_KEY
-                export AWS_SESSION_TOKEN=$(echo "$out" | jq -r '.Credentials.SessionToken')
-                echo $AWS_SESSION_TOKEN
-                export STATUS_DIR=$HOME/cpd-status
-                export CONFIG_DIR=$HOME/cpd-config
-                export CP_ENTITLEMENT_KEY=${APIKey}
-                export ROSA_LOGIN_TOKEN=${RosaToken}
-                cd $HOME/cloud-pak-deployer
-                /bin/bash ./cp-deploy.sh build
-                /bin/bash ./cp-deploy.sh vault set --vault-secret aws-access-key --vault-secret-value $(echo "$out" | jq -r '.Credentials.AccessKeyId')
-                /bin/bash ./cp-deploy.sh vault set --vault-secret aws-secret-access-key --vault-secret-value $(echo "$out" | jq -r '.Credentials.SecretAccessKey')
-                /bin/bash ./cp-deploy.sh vault set --vault-secret aws-session-token --vault-secret-value $(echo "$out" | jq -r '.Credentials.SessionToken')
-                /bin/bash ./cp-deploy.sh env destroy -e env_id=${ClusterName} --confirm-destroy
-                aws ssm put-parameter --name "$1_CleanupStatus" --type "String" --value "READY" --overwrite
-                echo "Destroy completed"
+              content: 
+                !Sub 
+                - |
+                  echo "$1 - Destroying"
+                  export HOME=/home/ec2-user
+                  
+                  export STATUS_DIR=$HOME/cpd-status
+                  export CONFIG_DIR=$HOME/cpd-config
+                  export AWS_ACCESS_KEY_ID=${CPDIAMUserAccessKey}
+                  export AWS_SECRET_ACCESS_KEY=${CPDIAMUserSecret}
+                  export CP_ENTITLEMENT_KEY=${APIKey}
+                  export ROSA_LOGIN_TOKEN=${RosaToken}
+                  cd $HOME/cloud-pak-deployer
+                  /bin/bash ./cp-deploy.sh build
+                  /bin/bash ./cp-deploy.sh env destroy -e env_id=${ClusterName} --confirm-destroy
+                  aws ssm put-parameter --name "$1_CleanupStatus" --type "String" --value "READY" --overwrite
+                  echo "Destroy completed"
+                - 
+                  CPDIAMUserAccessKey: !Ref CPDIAMUserAccessKey 
+                  CPDIAMUserSecret: !GetAtt CPDIAMUserAccessKey.SecretAccessKey
               mode: '000755'
               owner: root
               group: root
@@ -680,6 +702,19 @@ Resources:
               content: !Sub |
                 [default]
                 region=${AWS::Region}
+              mode: '000600'
+              owner: root
+              group: root
+            /root/.aws/credentials:
+              content: 
+                !Sub 
+                - |  
+                  [default]
+                  aws_access_key_id=${CPDIAMUserAccessKey}
+                  aws_secret_access_key=${CPDIAMUserSecret}
+                - 
+                  CPDIAMUserAccessKey: !Ref CPDIAMUserAccessKey 
+                  CPDIAMUserSecret: !GetAtt CPDIAMUserAccessKey.SecretAccessKey
               mode: '000600'
               owner: root
               group: root
@@ -779,50 +814,51 @@ Resources:
             cd ./cloud-pak-deployer
 
             # copy openshift and CP4D config file to config dir
-            wget https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/config/cp4d-480.yaml
-            cp ./cp4d-473.yaml $HOME/cpd-config/config/
+            wget https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/config/cp4d-50x.yaml
+            cp ./cp4d-50x.yaml $HOME/cpd-config/config/
 
             # replace parameters in CPD
-            sed -i 's/|CA|/'${CA}'/g' $HOME/cpd-config/config/cp4d-480yaml
-            sed -i 's/|CDE|/'${CDE}'/g' $HOME/cpd-config/config/cp4d-480yaml
-            sed -i 's/|DB2|/'${DB2}'/g' $HOME/cpd-config/config/cp4d-480yaml
-            sed -i 's/|DB2U|/'${DB2U}'/g' $HOME/cpd-config/config/cp4d-480yaml
-            sed -i 's/|DMC|/'${DMC}'/g' $HOME/cpd-config/config/cp4d-480yaml
-            sed -i 's/|DV|/'${DV}'/g' $HOME/cpd-config/config/cp4d-480yaml
-            sed -i 's/|FACTSHEET|/'${FACTSHEET}'/g' $HOME/cpd-config/config/cp4d-480yaml
-            sed -i 's/|WATSONASSISTANT|/'${WatsonAssistant}'/g' $HOME/cpd-config/config/cp4d-480yaml
-            sed -i 's/|WATSONDISCOVERY|/'${WatsonDiscovery}'/g' $HOME/cpd-config/config/cp4d-480yaml
-            sed -i 's/|WATSONKNOWLEDGESTUDIO|/'${WatsonKnowledgeStudio}'/g' $HOME/cpd-config/config/cp4d-480yaml
-            sed -i 's/|WATSONOPENSCALE|/'${OpenScale}'/g' $HOME/cpd-config/config/cp4d-480yaml
-            sed -i 's/|WATSONSPEECH|/'${WatsonSpeech}'/g' $HOME/cpd-config/config/cp4d-480yaml
-            sed -i 's/|WKC|/'${WKC}'/g' $HOME/cpd-config/config/cp4d-480yaml
-            sed -i 's/|WML|/'${WML}'/g' $HOME/cpd-config/config/cp4d-480yaml
-            sed -i 's/|WSL|/'${WSL}'/g' $HOME/cpd-config/config/cp4d-480yaml
-            sed -i 's/|WSP|/'${WSP}'/g' $HOME/cpd-config/config/cp4d-480yaml
-            sed -i 's/|RSTUDIO|/'${RSTUDIO}'/g' $HOME/cpd-config/config/cp4d-480yaml
-            sed -i 's/|OPENPAGES|/'${OPENPAGES}'/g' $HOME/cpd-config/config/cp4d-480yaml
-            sed -i 's/|WATSONXDATA|/'${WatsonxData}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+            sed -i 's/|CA|/'${CA}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|CDE|/'${CDE}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|DB2|/'${DB2}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|DB2U|/'${DB2U}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|DMC|/'${DMC}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|DV|/'${DV}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|FACTSHEET|/'${FACTSHEET}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|WATSONASSISTANT|/'${WatsonAssistant}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|WATSONDISCOVERY|/'${WatsonDiscovery}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|WATSONKNOWLEDGESTUDIO|/'${WatsonKnowledgeStudio}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|WATSONOPENSCALE|/'${OpenScale}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|WATSONSPEECH|/'${WatsonSpeech}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|WKC|/'${WKC}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|WML|/'${WML}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|WSL|/'${WSL}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|WSP|/'${WSP}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|RSTUDIO|/'${RSTUDIO}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|OPENPAGES|/'${OPENPAGES}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|WATSONXDATA|/'${WatsonxData}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|WATSONXGOV|/'${WatsonxGovernance}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
 
-            # watsonx AI
-            sed -i 's/|WATSONXAI|/'${WatsonxAI}'/g' $HOME/cpd-config/config/cp4d-480.yaml
-            sed -i 's/|GOOGLEFLANT5XXL|/'${GoogleFlanT5Xxl}'/g' $HOME/cpd-config/config/cp4d-480.yaml
-            sed -i 's/|GOOGLEFLANUL2|/'${GoogleFlanUl2}'/g' $HOME/cpd-config/config/cp4d-480.yaml
-            sed -i 's/|ELEUTHERAIGPTNEOX20B|/'${EleutheraiGptNeox20b}'/g' $HOME/cpd-config/config/cp4d-480.yaml
-            sed -i 's/|IBMGRANITE13BCHATV1|/'${IBMGranite13bChatV1}'/g' $HOME/cpd-config/config/cp4d-480.yaml
-            sed -i 's/|IBMGRANITE13BINSTRUCTV1|/'${IBMGranite13bInstructV1}'/g' $HOME/cpd-config/config/cp4d-480.yaml
-            sed -i 's/|METALLAMALLAMA270BCHAT|/'${MetaLlamaLlamaTwo70bChat}'/g' $HOME/cpd-config/config/cp4d-480.yaml
-            sed -i 's/|IBMMPT7BINSTRUCT2|/'${IBMMpt7bInstruct2}'/g' $HOME/cpd-config/config/cp4d-480.yaml
-            sed -i 's/|BIGSCIENCEMT0XXL|/'${BigscienceMt0Xxl}'/g' $HOME/cpd-config/config/cp4d-480.yaml
-            sed -i 's/|BIGCODESTARCODER|/'${BigcodeStarcoder}'/g' $HOME/cpd-config/config/cp4d-480.yaml
+                        # watsonx AI
+            sed -i 's/|WATSONXAI|/'${WatsonxAI}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|GOOGLEFLANT5XXL|/'${GoogleFlanT5Xxl}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|GOOGLEFLANUL2|/'${GoogleFlanUl2}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|ELEUTHERAIGPTNEOX20B|/'${EleutheraiGptNeox20b}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|IBMGRANITE13BCHATV1|/'${IBMGranite13bChatV1}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|IBMGRANITE13BINSTRUCTV1|/'${IBMGranite13bInstructV1}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|METALLAMALLAMA270BCHAT|/'${MetaLlamaLlamaTwo70bChat}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|IBMMPT7BINSTRUCT2|/'${IBMMpt7bInstruct2}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|BIGSCIENCEMT0XXL|/'${BigscienceMt0Xxl}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
+            sed -i 's/|BIGCODESTARCODER|/'${BigcodeStarcoder}'/g' $HOME/cpd-config/config/cp4d-50x.yaml
 
 
-            if [ "${MultiAZ}" == "True" ]; then
-              wget https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/config/ocp-aws-rosa-elastic.yaml
-              cp ./ocp-aws-rosa-elastic.yaml $HOME/cpd-config/config/ocp-aws-rosa-elastic.yaml
-            else
-              wget https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/config/ocp-aws-rosa-elastic-1az.yaml
-              cp ./ocp-aws-rosa-elastic-1az.yaml $HOME/cpd-config/config/ocp-aws-rosa-elastic.yaml
-            fi
+            #if [ "${MultiAZ}" == "True" ]; then
+            #  wget https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/config/ocp-aws-rosa-elastic.yaml
+            #  cp ./ocp-aws-rosa-elastic.yaml $HOME/cpd-config/config/ocp-aws-rosa-elastic.yaml
+            #else
+            #  wget https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/config/ocp-aws-rosa-elastic-1az.yaml
+            #  cp ./ocp-aws-rosa-elastic-1az.yaml $HOME/cpd-config/config/ocp-aws-rosa-elastic.yaml
+            #fi
 
             echo "---" > $HOME/cpd-config/config/ocp-aws-rosa-elastic.yaml
             yq -i ".global_config.environment_name = \"${ClusterName}\"" $HOME/cpd-config/config/ocp-aws-rosa-elastic.yaml
@@ -834,14 +870,13 @@ Resources:
             yq -i ".nfs_server[0].name = \"{{ env_id }}-elastic\"" $HOME/cpd-config/config/ocp-aws-rosa-elastic.yaml
             yq -i ".nfs_server[0].infrastructure.aws_region = \"{{ aws_region }}\"" $HOME/cpd-config/config/ocp-aws-rosa-elastic.yaml
 
-
             yq -i ".openshift[0].name = \"{{ env_id }}\"" $HOME/cpd-config/config/ocp-aws-rosa-elastic.yaml
             yq -i ".openshift[0].ocp_version = \"${OpenshiftVersion}\"" $HOME/cpd-config/config/ocp-aws-rosa-elastic.yaml
             yq -i ".openshift[0].compute_flavour = \"${ComputeInstanceType}\"" $HOME/cpd-config/config/ocp-aws-rosa-elastic.yaml
             yq -i ".openshift[0].compute_nodes = \"${NumberOfCompute}\"" $HOME/cpd-config/config/ocp-aws-rosa-elastic.yaml
             yq -i ".openshift[0].infrastructure.type = \"rosa\"" $HOME/cpd-config/config/ocp-aws-rosa-elastic.yaml
             yq -i ".openshift[0].infrastructure.aws_region = \"{{ aws_region }}\"" $HOME/cpd-config/config/ocp-aws-rosa-elastic.yaml
-            yq -i ".openshift[0].infrastructure.use_sts = True" $HOME/cpd-config/config/ocp-aws-rosa-elastic.yaml
+            yq -i ".openshift[0].infrastructure.use_sts = False" $HOME/cpd-config/config/ocp-aws-rosa-elastic.yaml
 
             if [ "${MultiAZ}" == "True" ]; then
               yq -i ".openshift[0].infrastructure.multi_zone = True" $HOME/cpd-config/config/ocp-aws-rosa-elastic.yaml
@@ -910,39 +945,26 @@ Resources:
             # set environment variables
             export STATUS_DIR=$HOME/cpd-status
             export CONFIG_DIR=$HOME/cpd-config
+            export AWS_ACCESS_KEY_ID=${CPDIAMUserAccessKey}
+            export AWS_SECRET_ACCESS_KEY=${CPDIAMUserSecret}
             export CP_ENTITLEMENT_KEY=${APIKey}
             export ROSA_LOGIN_TOKEN=${RosaToken}
 
-            out=$(aws sts assume-role --role-arn ${BootNodeIamRole.Arn} --role-session-name OCPInstall)
-            /bin/bash $CPDEPLOYER/cp-deploy.sh vault set --vault-secret aws-access-key --vault-secret-value $(echo "$out" | jq -r '.Credentials.AccessKeyId')
-            /bin/bash $CPDEPLOYER/cp-deploy.sh vault set --vault-secret aws-secret-access-key --vault-secret-value $(echo "$out" | jq -r '.Credentials.SecretAccessKey')
-            /bin/bash $CPDEPLOYER/cp-deploy.sh vault set --vault-secret aws-session-token --vault-secret-value $(echo "$out" | jq -r '.Credentials.SessionToken')
-
-            # create secrets in terraform vault
+            /bin/bash $CPDEPLOYER/cp-deploy.sh vault set --vault-secret aws-access-key --vault-secret-value $AWS_ACCESS_KEY_ID
+            /bin/bash $CPDEPLOYER/cp-deploy.sh vault set --vault-secret aws-secret-access-key --vault-secret-value $AWS_SECRET_ACCESS_KEY
             /bin/bash $CPDEPLOYER/cp-deploy.sh vault set --vault-secret ocp-ssh-pub-key --vault-secret-file ~/.ssh/id_rsa.pub
             
-            # refresh sts-token periodically
-            wget https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/config/refresh-sts-cron.sh
-            mv ./refresh-sts-cron.sh /home/ec2-user/refresh-sts.sh
-            chmod +x /home/ec2-user/refresh-sts.sh
-
-            #sudo chown -R ec2-user:ec2-user /home/ec2-user/
-
-            # add cronjob
-            crontab -l >> crontablist
-            echo "*/33 * * * * /home/ec2-user/refresh-sts.sh /home/ec2-user/cloud-pak-deployer ${BootNodeIamRole.Arn} /home/ec2-user/refresh-sts-cron.log >> /home/ec2-user/refresh-sts-cron.log 2>&1" >> crontablist
-            crontab crontablist -u ec2-user
-            rm crontablist
-
             sudo chown -R ec2-user:ec2-user /home/ec2-user/
 
             # verify all configuration
-            #/bin/bash $CPDEPLOYER/cp-deploy.sh env apply -e env_id=${ClusterName} --check-only [--accept-all-licenses]
-            /bin/bash $CPDEPLOYER/cp-deploy.sh env apply -e env_id=${ClusterName} [--accept-all-licenses]
+            /bin/bash $CPDEPLOYER/cp-deploy.sh env apply -e env_id=${ClusterName} --check-only [--accept-all-licenses]
+            #/bin/bash $CPDEPLOYER/cp-deploy.sh env apply -e env_id=${ClusterName} [--accept-all-licenses]
             ecode=$?
             /usr/local/bin/cfn-signal --exit-code $ecode --id $AWS_STACKID  --data "See logs at ${ICPDDeploymentLogsBucketName}/cpd-bootstrap.log" $ICPDInstallationCompletedURL
           -
             AMI_ID: !FindInMap [AWSAMIRegionMap, !Ref "AWS::Region", COREOSAmiId]
+            CPDIAMUserAccessKey: !Ref CPDIAMUserAccessKey 
+            CPDIAMUserSecret: !GetAtt CPDIAMUserAccessKey.SecretAccessKey
             LicenseAgreement: !If [ AcceptLicense, 'accept', 'reject']
             MultiAZ: !If [ 3AZCondition , 'True', 'False']
             AvailabilityZone1: !Select [0, !Ref AvailabilityZones]

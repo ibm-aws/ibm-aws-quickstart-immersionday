@@ -253,7 +253,7 @@ Parameters:
   OpenshiftVersion:
     Description: Choose Red Hat OpenShift Service on AWS (ROSA) Version.
     Type: String
-    Default: "4.12.51"
+    Default: "4.14.30"
   LicenseAgreement:
     Description: >-
       I have read and agreed to the license terms for IBM Cloud Pak for Data that were provided to me at time of purchase.
@@ -876,7 +876,7 @@ Resources:
             wget https://ibm-aws-immersion-day.s3.us-east-2.amazonaws.com/cloudformation/config/cp4d-48x.yaml
             cp ./cp4d-48x.yaml $HOME/cpd-config/config/
 
-           # replace parameters in CPD
+            # replace parameters in CPD
             sed -i 's/|CA|/'${CA}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
             sed -i 's/|CDE|/'${CDE}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
             sed -i 's/|DB2|/'${DB2}'/g' $HOME/cpd-config/config/cp4d-48x.yaml
